@@ -1,0 +1,123 @@
+name: "[STAGING] Deploy Azure Container Apps"
+
+on:
+  workflow_dispatch:
+
+env:
+    CONTAINER_REGISTRY_NAME: "linkd"
+    CONTAINER_APPS_ENVIRONMENT: "aca-env-linkd-prod-usc-001"
+    API_CONTAINER_APP_NAME: "aca-api-linkd-prod-usc-001"
+    GIN_API_CONTAINER_APP_NAME: "aca-gin-api-linkd-prod-usc-001"
+    FRONTEND_CONTAINER_APP_NAME: "aca-frontend-linkd-prod-usc-001"
+
+jobs:
+    deploy-frontend:
+        runs-on: ubuntu-latest
+        steps:
+            - name: "Checkout GitHub Action"
+              uses: actions/checkout@main
+
+            - name: "Set job level variables"
+              run: |
+                  echo "Staging_Artifact=${{ secrets.REGISTRY_LOGIN_SERVER }}/${{ env.CONTAINER_APPS_ENVIRONMENT }}-frontend:${{ github.sha }}" >> $GITHUB_ENV
+
+            - name: "Login via Azure CLI"
+              uses: azure/login@v1
+              with:
+                  creds: ${{ secrets.AZURE_CREDENTIALS }}
+
+            - name: "Build and push Frontend image"
+              uses: azure/docker-login@v1
+              with:
+                  login-server: ${{ secrets.REGISTRY_LOGIN_SERVER }}
+                  username: ${{ secrets.REGISTRY_USERNAME }}
+                  password: ${{ secrets.REGISTRY_PASSWORD }}
+            - run: |
+                  cd frontend
+                  docker build -f ./Dockerfile -t $Staging_Artifact --target prod .
+                  docker push $Staging_Artifact
+
+            - name: "Deploy Frontend to Container Apps"
+              uses: azure/container-apps-deploy-action@v1
+              with:
+                  imageToDeploy: $Staging_Artifact
+                  acrName: ${{ env.CONTAINER_REGISTRY_NAME }}
+                  acrUsername: ${{ secrets.REGISTRY_USERNAME }}
+                  acrPassword: ${{ secrets.REGISTRY_PASSWORD }}
+                  containerAppName: ${{ env.FRONTEND_CONTAINER_APP_NAME }}
+                  containerAppEnvironment: ${{ env.CONTAINER_APPS_ENVIRONMENT }}
+                  resourceGroup: ${{ secrets.RESOURCE_GROUP }}
+
+    deploy-python-api:
+        runs-on: ubuntu-latest
+        steps:
+            - name: "Checkout GitHub Action"
+              uses: actions/checkout@main
+
+            - name: "Set job level variables"
+              run: |
+                  echo "Staging_Artifact=${{ secrets.REGISTRY_LOGIN_SERVER }}/${{ env.CONTAINER_APPS_ENVIRONMENT }}-ai-api:${{ github.sha }}" >> $GITHUB_ENV
+
+            - name: "Login via Azure CLI"
+              uses: azure/login@v1
+              with:
+                  creds: ${{ secrets.AZURE_CREDENTIALS }}
+
+            - name: "Build and push Python API image"
+              uses: azure/docker-login@v1
+              with:
+                  login-server: ${{ secrets.REGISTRY_LOGIN_SERVER }}
+                  username: ${{ secrets.REGISTRY_USERNAME }}
+                  password: ${{ secrets.REGISTRY_PASSWORD }}
+            - run: |
+                  cd pybackend
+                  docker build -f Dockerfile -t $Staging_Artifact --target prod .
+                  docker push $Staging_Artifact
+
+            - name: "Deploy Python API to Container Apps"
+              uses: azure/container-apps-deploy-action@v1
+              with:
+                  imageToDeploy: $Staging_Artifact
+                  acrName: ${{ env.CONTAINER_REGISTRY_NAME }}
+                  acrUsername: ${{ secrets.REGISTRY_USERNAME }}
+                  acrPassword: ${{ secrets.REGISTRY_PASSWORD }}
+                  containerAppName: ${{ env.GIN_API_CONTAINER_APP_NAME }}
+                  containerAppEnvironment: ${{ env.CONTAINER_APPS_ENVIRONMENT }}
+                  resourceGroup: ${{ secrets.RESOURCE_GROUP }}
+
+    deploy-java-api:
+        runs-on: ubuntu-latest
+        steps:
+            - name: "Checkout GitHub Action"
+              uses: actions/checkout@main
+
+            - name: "Set job level variables"
+              run: |
+                  echo "Staging_Artifact=${{ secrets.REGISTRY_LOGIN_SERVER }}/${{ env.CONTAINER_APPS_ENVIRONMENT }}-api:${{ github.sha }}" >> $GITHUB_ENV
+
+            - name: "Login via Azure CLI"
+              uses: azure/login@v1
+              with:
+                  creds: ${{ secrets.AZURE_CREDENTIALS }}
+
+            - name: "Build and push API image"
+              uses: azure/docker-login@v1
+              with:
+                  login-server: ${{ secrets.REGISTRY_LOGIN_SERVER }}
+                  username: ${{ secrets.REGISTRY_USERNAME }}
+                  password: ${{ secrets.REGISTRY_PASSWORD }}
+            - run: |
+                  cd springbackend
+                  docker build -f Dockerfile -t $Staging_Artifact
+                  docker push $Staging_Artifact
+
+            - name: "Deploy API to Container Apps"
+              uses: azure/container-apps-deploy-action@v1
+              with:
+                  imageToDeploy: $Staging_Artifact
+                  acrName: ${{ env.CONTAINER_REGISTRY_NAME }}
+                  acrUsername: ${{ secrets.REGISTRY_USERNAME }}
+                  acrPassword: ${{ secrets.REGISTRY_PASSWORD }}
+                  containerAppName: ${{ env.API_CONTAINER_APP_NAME }}
+                  containerAppEnvironment: ${{ env.CONTAINER_APPS_ENVIRONMENT }}
+                  resourceGroup: ${{ secrets.RESOURCE_GROUP }}

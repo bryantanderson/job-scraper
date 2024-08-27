@@ -1,0 +1,18 @@
+name: "[BACKEND] Formatting"
+
+# The wildcard ** will match every branch
+
+on:
+  pull_request:
+    branches: ["**"]
+
+
+jobs:
+  ruff:
+    runs-on: ubuntu-latest
+    steps:
+      - name: "Checkout GitHub repository"
+        uses: actions/checkout@v4
+
+      - name: "Run ruff lint and format"
+        uses: chartboost/ruff-action@v1

@@ -1,0 +1,19 @@
+# Global configuration settings for Prometheus
+global:
+  scrape_interval: 15s
+  scrape_timeout: 10s
+  evaluation_interval: 15s
+
+# Scrape configurations for Prometheus, defining jobs and their settings
+scrape_configs:
+  - job_name: 'api'
+    scrape_interval: 15s
+    metrics_path: /metrics
+    static_configs: 
+      - targets: [ 'gin:8090', 'fastapi:8000' ]
+
+  - job_name: 'spring-api'
+    scrape_interval: 10s
+    metrics_path: '/actuator/prometheus'
+    static_configs:
+      - targets: [ 'api:8080' ]

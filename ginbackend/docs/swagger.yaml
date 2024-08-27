@@ -1,0 +1,30 @@
+info:
+  contact: {}
+paths:
+  /health:
+    get:
+      consumes:
+      - application/json
+      description: Health check ping
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+      summary: Health check
+      tags:
+      - health
+  /scrape:
+    post:
+      consumes:
+      - application/json
+      description: Scrapes a given URL
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+      summary: Scrapes a given URL
+      tags:
+      - Scrape
+swagger: "2.0"

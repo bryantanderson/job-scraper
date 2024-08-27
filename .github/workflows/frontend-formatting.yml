@@ -1,0 +1,11 @@
+name: "[FRONTEND] Formatting"
+
+on:
+  workflow_dispatch:
+
+jobs:
+  dummy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: "Checkout GitHub repository"
+        uses: actions/checkout@v4

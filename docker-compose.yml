@@ -1,0 +1,152 @@
+services:
+  gin:
+    platform: linux/amd64
+    profiles: [ go, all ]
+    build:
+      context: ginbackend
+      dockerfile: Dockerfile
+    hostname: gin
+    container_name: gin
+    ports:
+      - 8090:8090
+
+  api:
+    platform: linux/amd64
+    profiles: [ java, all ]
+    build:
+      context: springbackend
+      dockerfile: Dockerfile
+    hostname: api
+    container_name: api
+    ports:
+      - 8080:8080
+    healthcheck:
+      test: curl --fail http://localhost:8080/health/ || exit 1
+      interval: 10s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
+    environment:
+      LOGGING_LEVEL: "ERROR"
+      APPLICATION_ENVIRONMENT: "dev"
+      RESEND_API_KEY: "re_H7Vn5LjG_FicNSKccxgF2NN46Gb8vR1en"
+      RESEND_EMAIL: "test@varshithm.dev"
+      POSTGRES_URI: "jdbc:postgresql://postgres:5432/postgres"
+      POSTGRES_USER: "linkd"
+      POSTGRES_PASS: "linkd"
+      JWT_SECRET: "d43c4c23506c7df6d59b48707c96a8c793372220cef2935d05a28f2e25c0bd56"
+      JWT_EXPIRATION: 3600000
+      HIKARI_CONNECTION_TIMEOUT: 20000
+      HIKARI_MAX_POOL_SIZE: 10
+      SERVICE_BUS_CONNECTION_STRING: "Endpoint=sb://sbn-linkd-dev-usc-001.servicebus.windows.net/;SharedAccessKeyName=RootManageSharedAccessKey;SharedAccessKey=VxwkFC5yYLDA8os9xZd0c9nLj6l1HP9vn+ASbI7sHQw="
+      JOB_TASKS_TOPIC: "sbt-job-tasks-linkd-dev-usc-001"
+      ASSESSMENT_TASKS_TOPIC: "sbt-assess-tasks-linkd-dev-usc-001"
+      JOB_RESULTS_TOPIC: "sbt-job-results-linkd-dev-usc-001"
+      ASSESSMENT_RESULTS_TOPIC: "sbt-assess-results-linkd-dev-usc-001"
+
+    depends_on:
+      postgres:
+        condition: service_started
+
+  postgres:
+    platform: linux/amd64
+    profiles: [ sql, all ]
+    image: postgres
+    hostname: postgres
+    container_name: postgres
+    ports:
+      - 5432:5432
+    environment:
+      POSTGRES_USER: linkd
+      POSTGRES_PASSWORD: linkd
+      POSTGRES_DB: postgres
+      PG_DATA: /var/lib/postgresql/data
+    volumes:
+      - type: volume
+        source: postgres-data
+        target: /var/lib/postgresql/data
+
+  # redis:
+  #   platform: linux/amd64
+  #   profiles: [cache, all]
+  #   image: bitnami/redis:latest
+  #   ports:
+  #     - 6379:6379
+  #   environment:
+  #     ALLOW_EMPTY_PASSWORD: "yes"
+  #   volumes:
+  #     - redis-data:/bitnami/redis/data
+
+  pgadmin:
+    platform: linux/amd64
+    profiles: [ instrument ]
+    image: dpage/pgadmin4
+    hostname: pgadmin
+    container_name: pgadmin
+    ports:
+      - 5050:5050
+    environment:
+      PGADMIN_DEFAULT_EMAIL: linkd@sindy.ai
+      PGADMIN_DEFAULT_PASSWORD: linkd
+      PGADMIN_LISTEN_PORT: 5050
+    volumes:
+      - pgadmin-data:/var/lib/pgadmin
+
+    depends_on:
+      postgres:
+        condition: service_started
+
+  prometheus:
+    platform: linux/amd64
+    profiles: [ instrument ]
+    image: prom/prometheus
+    hostname: prometheus
+    container_name: prometheus
+    ports:
+      - 9090:9090
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+    volumes:
+      - ./config/prometheus.yml:/etc/prometheus/prometheus.yml
+      - prometheus-data:/prometheus
+    depends_on:
+      api:
+        condition:
+          service_started
+      gin:
+        condition:
+          service_started
+      fastapi:
+        condition:
+          service_started
+
+  grafana:
+    platform: linux/amd64
+    profiles: [ instrument ]
+    hostname: grafana
+    container_name: grafana
+    ports:
+      - 3001:3001
+    environment:
+      GF_SECURITY_ADMIN_USER: "noahtahameesala"
+      GF_SECURITY_ADMIN_PASSWORD: "noahtahameesala"
+      GF_USERS_ALLOW_SIGN_UP: false
+      GF_SERVER_HTTP_PORT: 3001
+    volumes:
+      - grafana_data:/var/lib/grafana
+
+    depends_on:
+      prometheus:
+        condition: service_started
+
+volumes:
+  postgres-data:
+    name: "postgres-data"
+  pgadmin-data:
+    name: "pgadmin-data"
+  mongodb-data:
+    name: "mongodb-data"
+  prometheus-data:
+    name: "prometheus-data"
+  grafana-data:
+    name: "grafana-data"

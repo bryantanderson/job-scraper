@@ -1,0 +1,132 @@
+package services_test
+
+import (
+	"errors"
+	"net/http/httptest"
+	"sincidium/linkd/api/services"
+	"testing"
+
+	"github.com/gin-gonic/gin"
+	"github.com/stretchr/testify/assert"
+)
+
+// Define the fake
+
+type FakeDummyStore struct {
+	dummies map[string]*services.Dummy
+}
+
+func NewFakeDummyStore() *FakeDummyStore {
+	return &FakeDummyStore{
+		dummies: make(map[string]*services.Dummy),
+	}
+}
+
+func (s *FakeDummyStore) Create(dummy *services.Dummy) error {
+	if _, ok := s.dummies[dummy.Id]; ok {
+		return errors.New("dummy already exists")
+	}
+	s.dummies[dummy.Id] = dummy
+	return nil
+}
+
+func (s *FakeDummyStore) FindById(id string) (*services.Dummy, error) {
+	if dummy, ok := s.dummies[id]; ok {
+		return dummy, nil
+	}
+	return nil, errors.New("Dummy not found")
+}
+
+func (s *FakeDummyStore) Update(dto *services.DummyDto, id string) (*services.Dummy, error) {
+	if dummy, ok := s.dummies[id]; ok {
+		dummy.Name = dto.Name
+		return dummy, nil
+	}
+	return nil, errors.New("Dummy not found")
+}
+
+func (s *FakeDummyStore) DeleteById(id string) error {
+	if _, ok := s.dummies[id]; ok {
+		delete(s.dummies, id)
+		return nil
+	}
+	return errors.New("Dummy not found")
+}
+
+func getTestContext() *gin.Context {
+	w := httptest.NewRecorder()
+	ctx, _ := gin.CreateTestContext(w)
+	return ctx
+}
+
+func TestCreateAndGetDummy(t *testing.T) {
+	gin.SetMode(gin.TestMode)
+
+	fakeStore := NewFakeDummyStore()
+	sut := services.NewDummyService(fakeStore)
+
+	ctx := getTestContext()
+	dto := &services.DummyDto{Name: "Test"}
+
+	// Create dummy and make assertions
+	createdDummy, err := sut.CreateDummy(ctx, dto)
+
+	assert.NoError(t, err)
+	assert.NotNil(t, createdDummy)
+	assert.Equal(t, dto.Name, createdDummy.Name)
+	assert.NotEmpty(t, createdDummy.Id)
+
+	// Find dummy and make assertions
+	storedDummy, err := sut.GetDummy(ctx, createdDummy.Id)
+
+	assert.NoError(t, err)
+	assert.Equal(t, createdDummy.Name, storedDummy.Name)
+}
+
+func TestUpdateDummy(t *testing.T) {
+	gin.SetMode(gin.TestMode)
+
+	fakeStore := NewFakeDummyStore()
+	sut := services.NewDummyService(fakeStore)
+
+	ctx := getTestContext()
+	dto := &services.DummyDto{Name: "Test"}
+
+	// Create dummy
+	createdDummy, err := sut.CreateDummy(ctx, dto)
+
+	assert.NoError(t, err)
+
+	// Update dummy with new data and make assertions
+	updateDto := &services.DummyDto{Name: "Updated Test"}
+	updatedDummy, err := sut.UpdateDummy(ctx, updateDto, createdDummy.Id)
+
+	assert.NoError(t, err)
+	assert.Equal(t, updateDto.Name, updatedDummy.Name)
+}
+
+func TestDeleteDummy(t *testing.T) {
+	gin.SetMode(gin.TestMode)
+
+	fakeStore := NewFakeDummyStore()
+	sut := services.NewDummyService(fakeStore)
+
+	ctx := getTestContext()
+	dto := &services.DummyDto{Name: "Test"}
+
+	// Create dummy
+	createdDummy, err := sut.CreateDummy(ctx, dto)
+
+	assert.NoError(t, err)
+
+	// Delete dummy and make assertions
+	err = sut.DeleteDummy(ctx, createdDummy.Id)
+
+	assert.NoError(t, err)
+
+	// Check that the dummy no longer exists
+	existingDummy, err := sut.GetDummy(ctx, createdDummy.Id)
+
+	assert.Error(t, err)
+	assert.Nil(t, existingDummy)
+}

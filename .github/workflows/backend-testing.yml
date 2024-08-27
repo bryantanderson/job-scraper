@@ -1,0 +1,17 @@
+name: "[BACKEND] Tests"
+
+on:
+  push:
+    branches: ["**"]
+
+jobs:
+  go-tests:
+    runs-on: ubuntu-latest
+    steps:
+      - name: "Checkout repository onto runner"
+        uses: actions/checkout@main
+
+      - name: "Run go tests"
+        run: |
+          cd ginbackend
+          go test ./...
