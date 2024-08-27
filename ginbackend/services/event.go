@@ -2,6 +2,7 @@ package services
 
 import (
 	"context"
+	"sync"
 
 	"sincidium/linkd/api/setup"
 	"time"
@@ -18,6 +19,7 @@ type Event struct {
 }
 
 type EventService struct {
+	mu 			  sync.Mutex
 	client        *azservicebus.Client
 	producerMap   map[string]*azservicebus.Sender
 	subscriberMap map[string]*azservicebus.Receiver
@@ -119,7 +121,9 @@ func (s *EventService) createSubscriber(topic, subscriber string) *azservicebus.
 	receiver, err := s.client.NewReceiverForSubscription(
 		topic, subscriber, nil,
 	)
+	s.mu.Lock()
 	s.subscriberMap[topic] = receiver
+	s.mu.Unlock()
 
 	checkFatalError(err)
 

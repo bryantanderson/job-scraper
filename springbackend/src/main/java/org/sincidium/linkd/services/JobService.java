@@ -13,31 +13,19 @@ import org.sincidium.linkd.models.Qualification;
 import org.sincidium.linkd.repositories.JobRepository;
 import org.sincidium.linkd.repositories.QualificationRepository;
 import org.sincidium.linkd.repositories.ResponsibilityRepository;
-import org.sincidium.linkd.utils.IdUtils;
 import org.sincidium.linkd.utils.ResourceNotFoundException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.server.ResponseStatusException;
 
-import com.azure.messaging.servicebus.ServiceBusErrorContext;
-import com.azure.messaging.servicebus.ServiceBusReceivedMessageContext;
-import com.fasterxml.jackson.databind.ObjectMapper;
-
 @Service
-public class JobService implements ICrudService<Job, JobDto, UUID>, IEventDrivenService {
+public class JobService implements ICrudService<Job, JobDto, UUID> {
 
     Logger logger = LoggerFactory.getLogger(JobService.class);
-
-    @Value("${service.bus.job.tasks.topic}")
-    private String jobTasksTopic;
-
-    @Value("${service.bus.job.results.topic}")
-    private String jobResultsTopic;
 
     @Autowired
     private JobRepository jobRepository;
@@ -47,9 +35,6 @@ public class JobService implements ICrudService<Job, JobDto, UUID>, IEventDriven
 
     @Autowired
     private QualificationRepository qualificationRepository;
-
-    @Autowired
-    private EventService eventService;
 
     @Override
     @Transactional
@@ -74,10 +59,6 @@ public class JobService implements ICrudService<Job, JobDto, UUID>, IEventDriven
         savedJob.setResponsibilities(savedResponsibilities);
         savedJob.setQualifications(savedQualifications);
         return savedJob;
-    }
-
-    public void createFromUnstructuredData(String data) {
-        eventService.publish(jobTasksTopic, data);
     }
 
     @Override
@@ -113,28 +94,6 @@ public class JobService implements ICrudService<Job, JobDto, UUID>, IEventDriven
         model.setLocationType(parseJobLocationType(dto.getLocationType()));
     }
 
-    public void subscribe() {
-        eventService.subscribe(
-            jobResultsTopic, IdUtils.topicNameToSubscriptionName(jobResultsTopic), this
-        );
-    }
-
-    @Override
-    public void handleMessage(ServiceBusReceivedMessageContext messageContext) {
-        try {
-            ObjectMapper mapper = new ObjectMapper();
-            JobDto dto = mapper.readValue(messageContext.getMessage().getBody().toString(), JobDto.class);
-            create(dto);
-        } catch (Exception ex) {
-            logger.error(ex.getMessage());
-        }
-    }
-
-    @Override
-    public void handleError(ServiceBusErrorContext errorContext) {
-        logger.error(errorContext.getException().getMessage());
-    }
-
     private JobLocationTypeEnum parseJobLocationType(String jobLocationType) throws ResponseStatusException {
         try {
             return JobLocationTypeEnum.valueOf(jobLocationType);
@@ -142,6 +101,5 @@ public class JobService implements ICrudService<Job, JobDto, UUID>, IEventDriven
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Invalid job location type");
         }
     }
-
 
 }

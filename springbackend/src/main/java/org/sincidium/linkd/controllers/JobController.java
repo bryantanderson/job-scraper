@@ -33,12 +33,6 @@ public class JobController {
         return jobService.create(dto);
     }
 
-    @PostMapping("/unstructured")
-    @ResponseStatus(HttpStatus.CREATED)
-    public void createJobFromUnstructuredData(@RequestBody String data) {
-        jobService.createFromUnstructuredData(data);
-    }
-
     @GetMapping("/{jobId}")
     @ResponseStatus(HttpStatus.OK)
     public Job getJob(@PathVariable UUID jobId) {
