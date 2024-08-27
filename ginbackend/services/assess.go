@@ -158,14 +158,14 @@ func (a *AssessorService) registerSubscribers() {
 		mChan := make(chan []byte, numWorkers)
 		defer close(mChan)
 		for i := 1; i <= numWorkers; i++ {
-			go a.AssessCandidate(i, mChan)
+			go a.worker(i, mChan)
 		}
 		a.eventService.Subscribe(a.inTopic, a.inTopicSubscription, mChan)
 	}
 	a.eventService.Register(routine)
 }
 
-func (a *AssessorService) AssessCandidate(i int, mChan chan []byte) {
+func (a *AssessorService) worker(i int, mChan <-chan []byte) {
 	log.Infof("Worker number %d for assessment tasks starting...\n", i)
 	for {
 		messageBody, ok := <-mChan
@@ -175,82 +175,86 @@ func (a *AssessorService) AssessCandidate(i int, mChan chan []byte) {
 			break
 		}
 
-		var payload AssessPayload
-		err := json.Unmarshal(messageBody, &payload)
+		payload := &AssessPayload{}
+		err := json.Unmarshal(messageBody, payload)
 
 		if err != nil {
 			log.Printf("Unable to unmarshal message body: %s \n", err)
 			continue
 		}
 
-		ca := CandidateAssessment{
-			Assessment: Assessment{
-				Id:    fmt.Sprintf("%s_%s", payload.UserId, "assessment"),
-				JobId: payload.Job.Id,
-			},
-			client: a.client,
-		}
-		jobCriteria, err := a.createCriteria(&payload.Job)
-		a.store.CreateInternalJobCriteria(jobCriteria)
+		a.AssessCandidate(payload)
+	}
+}
+
+func (a *AssessorService) AssessCandidate(payload *AssessPayload) {
+	ca := CandidateAssessment{
+		Assessment: Assessment{
+			Id:    fmt.Sprintf("%s_%s", payload.UserId, "assessment"),
+			JobId: payload.Job.Id,
+		},
+		client: a.client,
+	}
+	jobCriteria, err := a.createCriteria(&payload.Job)
+	a.store.CreateInternalJobCriteria(jobCriteria)
+
+	if err != nil {
+		log.Errorf("Failed to create criteria for job: %s \n", err.Error())
+		return
+	}
+
+	// Instantiate wait group, error channel, and cancel context
+	// The cancel func is run if any errors occur to halt all operations
+	var wg sync.WaitGroup
+
+	wgDone := make(chan bool)
+	errChan := make(chan error, 1)
+	defer close(errChan)
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+
+	log.Infoln("Tasks for assessing candidate beginning")
+
+	tasks := []func(){
+		func() { ca.assessExperience(payload, &wg) },
+		func() { ca.assessLocation(ctx, payload, &wg, errChan) },
+		func() { ca.assessRequirements(ctx, payload, &wg, errChan) },
+		func() { ca.assessCompatibility(ctx, payload, &wg, errChan) },
+		func() { ca.assessResponsibilities(ctx, &payload.Candidate, jobCriteria, &wg, errChan) },
+		func() { ca.assessSkills(ctx, &payload.Candidate, jobCriteria, &wg, errChan) },
+	}
+	for _, t := range tasks {
+		wg.Add(1)
+		go t()
+	}
+	go func() {
+		wg.Wait()
+		close(wgDone)
+	}()
+	/*
+	 * The select statement will cancel all goroutine operations if an error
+	 * is received, a cancel is called, or if the timeout is reached.
+	 * It will otherwise proceed to wait for all goroutines to finish.
+	 */
+	select {
+	case err := <-errChan:
+		log.Errorf("Received error: %v, cancelling all goroutines\n", err)
+		cancel()
+
+	case <-ctx.Done():
+		log.Error(ctx.Err().Error())
+
+	case <-time.After(time.Minute):
+		log.Errorln("Timeout reached, cancelling all goroutines")
+		cancel()
+
+	case <-wgDone:
+		log.Infoln("All goroutines have completed successfully, finalizing assessment score")
+		ca.finalizeAssessment()
+		err = a.store.Create(&ca.Assessment)
 
 		if err != nil {
-			log.Errorf("Failed to create criteria for job: %s \n", err.Error())
-			continue
-		}
-
-		// Instantiate wait group, error channel, and cancel context
-		// The cancel func is run if any errors occur to halt all operations
-		var wg sync.WaitGroup
-
-		wgDone := make(chan bool)
-		errChan := make(chan error, 1)
-		defer close(errChan)
-		ctx, cancel := context.WithCancel(context.Background())
-		defer cancel()
-
-		log.Infoln("Tasks for assessing candidate beginning")
-
-		tasks := []func(){
-			func() { ca.assessExperience(&payload, &wg) },
-			func() { ca.assessLocation(ctx, &payload, &wg, errChan) },
-			func() { ca.assessRequirements(ctx, &payload, &wg, errChan) },
-			func() { ca.assessCompatibility(ctx, &payload, &wg, errChan) },
-			func() { ca.assessResponsibilities(ctx, &payload.Candidate, jobCriteria, &wg, errChan) },
-			func() { ca.assessSkills(ctx, &payload.Candidate, jobCriteria, &wg, errChan) },
-		}
-		for _, t := range tasks {
-			wg.Add(1)
-			go t()
-		}
-		go func() {
-			wg.Wait()
-			close(wgDone)
-		}()
-		/*
-		 * The select statement will cancel all goroutine operations if an error
-		 * is received, a cancel is called, or if the timeout is reached.
-		 * It will otherwise proceed to wait for all goroutines to finish.
-		 */
-		select {
-		case err := <-errChan:
-			log.Errorf("Received error: %v, cancelling all goroutines\n", err)
-			cancel()
-
-		case <-ctx.Done():
-			log.Error(ctx.Err().Error())
-
-		case <-time.After(time.Minute):
-			log.Errorln("Timeout reached, cancelling all goroutines")
-			cancel()
-
-		case <-wgDone:
-			log.Infoln("All goroutines have completed successfully, finalizing assessment score")
-			ca.finalizeAssessment()
-			err = a.store.Create(&ca.Assessment)
-
-			if err != nil {
-				log.Infof("Failed to save assessment: %s\n", err.Error())
-			}
+			log.Infof("Failed to save assessment: %s\n", err.Error())
 		}
 	}
 }

@@ -26,7 +26,7 @@ type Responsibility struct {
 }
 
 type Job struct {
-	Id                string           `json:"id,omitempty"`
+	Id                string           `json:"id,omitempty" bson:"_id"`
 	Title             string           `json:"title" jsonschema:"description=The position that the job is hiring for"`
 	Description       string           `json:"description" jsonschema:"description=Brief summary of what the job is about"`
 	Responsibilities  []Responsibility `json:"responsibilities" jsonschema:"description=Responsibilities of the ideal employee listed out in the job description"`
@@ -74,59 +74,65 @@ func (s *JobService) RegisterSubscribers() {
 		mChan := make(chan []byte, numWorkers)
 		defer close(mChan)
 		for i := 1; i <= numWorkers; i++ {
-			go s.StructureJob(i, mChan)
+			go s.worker(i, mChan)
 		}
 		s.eventService.Subscribe(s.inTopic, s.inTopicSubscription, mChan)
 	}
 	s.eventService.Register(routine)
 }
 
-func (s *JobService) StructureJob(i int, mChan <-chan []byte) {
+func (s *JobService) worker(i int, mChan <-chan []byte) {
 	log.Printf("Worker number %d for job tasks starting...", i)
 	for {
 		body, ok := <-mChan
 		description := string(body)
+
 		if !ok {
 			// If the channel is closed, the worker should stop
 			break
 		}
-		prompt := fmt.Sprintf(`
-		Given the job description, turn it into a structured json format.
 
-    	Job Description:
-		%s
-		`, description)
-
-		job := Job{}
-		ctx, cancel := context.WithTimeout(context.Background(), time.Second*time.Duration(TIMEOUT))
-		defer cancel()
-
-		resp, err := s.client.CreateChatCompletion(
-			ctx,
-			makeChatCompletionRequest(prompt, len(description)/2),
-			&job,
-		)
-		_ = resp
-
-		if err != nil {
-			log.Errorf("Failed to structure job description: %s", err.Error())
-			return
-		}
-
-		jobJson, err := json.Marshal(job)
-
-		if err != nil {
-			log.Errorln(err)
-			return
-		}
-
-		event := Event{
-			topic:       s.outTopic,
-			body:        string(jobJson),
-			contentType: "application/json",
-		}
-		s.eventService.Publish(&event)
+		s.structureJob(description)
 	}
+}
+
+func (s *JobService) structureJob(description string) {
+	prompt := fmt.Sprintf(`
+	Given the job description, turn it into a structured json format.
+
+    Job Description:
+	%s
+	`, description)
+
+	job := Job{}
+	ctx, cancel := context.WithTimeout(context.Background(), time.Second*time.Duration(TIMEOUT))
+	defer cancel()
+
+	resp, err := s.client.CreateChatCompletion(
+		ctx,
+		makeChatCompletionRequest(prompt, len(description)/2),
+		&job,
+	)
+	_ = resp
+
+	if err != nil {
+		log.Errorf("Failed to structure job description: %s", err.Error())
+		return
+	}
+
+	jobJson, err := json.Marshal(job)
+
+	if err != nil {
+		log.Errorln(err)
+		return
+	}
+
+	event := Event{
+		topic:       s.outTopic,
+		body:        string(jobJson),
+		contentType: "application/json",
+	}
+	s.eventService.Publish(&event)
 }
 
 func (s *JobService) CompleteScrapedJob(scrapedJob *ScrapedJob) {

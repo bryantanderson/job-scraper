@@ -50,8 +50,8 @@ func NewEventService(appSettings *setup.ApplicationSettings) *EventService {
 	}
 }
 
-func (s *EventService) Register(routine func()) {
-	s.registered = append(s.registered, routine)
+func (s *EventService) Register(callback func()) {
+	s.registered = append(s.registered, callback)
 }
 
 func (s *EventService) Start() {
@@ -112,10 +112,10 @@ func (s *EventService) getSubscriber(topic, subscriber string) *azservicebus.Rec
 	if ok {
 		return receiver
 	}
-	return s.createServiceBusReceiver(topic, subscriber)
+	return s.createSubscriber(topic, subscriber)
 }
 
-func (s *EventService) createServiceBusReceiver(topic, subscriber string) *azservicebus.Receiver {
+func (s *EventService) createSubscriber(topic, subscriber string) *azservicebus.Receiver {
 	receiver, err := s.client.NewReceiverForSubscription(
 		topic, subscriber, nil,
 	)
