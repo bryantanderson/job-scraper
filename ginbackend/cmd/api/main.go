@@ -6,11 +6,10 @@ import (
 	"net/http"
 	"os"
 	"sincidium/linkd/api/database"
+	_ "sincidium/linkd/api/docs"
 	"sincidium/linkd/api/handlers"
 	"sincidium/linkd/api/setup"
-	_ "sincidium/linkd/api/docs"
 	"time"
-
 	"github.com/instructor-ai/instructor-go/pkg/instructor"
 	"github.com/sashabaranov/go-openai"
 	log "github.com/sirupsen/logrus"
@@ -29,7 +28,8 @@ func run(ctx context.Context) {
 	db.Open()
 
 	// Connect to OpenAI
-	openai := openai.NewClient(settings.OpenAiApiKey)
+	config := openai.DefaultAzureConfig(settings.AzureOpenAiApiKey, settings.AzureOpenAiEndpoint)
+	openai := openai.NewClientWithConfig(config)
 	client := instructor.FromOpenAI(
 		openai,
 		instructor.WithMode(instructor.ModeJSON),

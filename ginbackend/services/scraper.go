@@ -14,6 +14,16 @@ const (
 	seekSweJobsSuffix string = "/software-engineer-jobs"
 )
 
+type ScrapeSeekPayload struct {
+	UserId    string    `json:"userId"`
+	Candidate Candidate `json:"candidate"`
+}
+
+type ScrapedJobAssessment struct {
+	Job        Job        `json:"job"`
+	Assessment Assessment `json:"assessment"`
+}
+
 type ScrapedJob struct {
 	Title       string `json:"title"`
 	Company     string `json:"company"`
@@ -22,19 +32,21 @@ type ScrapedJob struct {
 }
 
 type ScraperService struct {
-	clientMap  map[string]*colly.Collector
-	jobService *JobService
+	clientMap       map[string]*colly.Collector
+	jobService      *JobService
+	assessorService *AssessorService
 }
 
-func NewScraperService(jobService *JobService) *ScraperService {
+func NewScraperService(jobService *JobService, assessorService *AssessorService) *ScraperService {
 	s := ScraperService{
-		clientMap:  make(map[string]*colly.Collector),
-		jobService: jobService,
+		clientMap:       make(map[string]*colly.Collector),
+		jobService:      jobService,
+		assessorService: assessorService,
 	}
 	return &s
 }
 
-func (s *ScraperService) ScrapeJobs() []*ScrapedJob {
+func (s *ScraperService) ScrapeSeek(payload *ScrapeSeekPayload) []*ScrapedJob {
 	var jobs []*ScrapedJob
 
 	// Create a collector for the job listings page
@@ -73,11 +85,57 @@ func (s *ScraperService) ScrapeJobs() []*ScrapedJob {
 		j.Description = strings.Join(parts, "\n")
 		jobs = append(jobs, j)
 
-		go s.jobService.CompleteScrapedJob(j)
+		go func() {
+			job := s.jobService.CompleteScrapedJob(j)
+
+			if job == nil {
+				log.Errorln("AI job completion was not completed successfully, returning early")
+				return
+			}
+
+			payload := AssessPayload{
+				Job:       *job,
+				UserId:    payload.UserId,
+				Candidate: payload.Candidate,
+			}
+			s.assessorService.AssessCandidate(&payload)
+		}()
 	})
 
 	jobListCollector.Visit(fmt.Sprintf("%s%s", seekUrlPrefix, seekSweJobsSuffix))
 	return jobs
+}
+
+
+func (s *ScraperService) GetScrapedSeekAssessments(userId string) []*ScrapedJobAssessment {
+	sja := make([]*ScrapedJobAssessment, 0)
+	queryParams := make(map[string]string)
+	queryParams["id"] = s.assessorService.UserIdToAssessmentId(userId)
+
+	assessments , err := s.assessorService.QueryAssessments(queryParams)
+
+	if err != nil {
+		log.Errorf("Failed to fetch assessments: %s\n", err.Error())
+	}
+
+	for _, a := range assessments {
+		sj := ScrapedJobAssessment{}
+
+		jobQueryParams := make(map[string]string)
+		jobQueryParams["id"] = a.JobId
+
+		jobs, err := s.jobService.QueryJobs(jobQueryParams)
+
+		if err != nil || len(jobs) == 0 {
+			continue
+		}
+
+		sj.Assessment = *a
+		sj.Job = *jobs[0]
+
+		sja = append(sja, &sj)
+	}
+	return sja
 }
 
 func (s *ScraperService) registerCallbacks(client *colly.Collector) {

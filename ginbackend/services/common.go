@@ -3,6 +3,7 @@ package services
 import (
 	"encoding/json"
 	"fmt"
+	"strings"
 
 	openai "github.com/sashabaranov/go-openai"
 )
@@ -25,6 +26,14 @@ func checkFatalError(err error) {
 	if err != nil {
 		panic(err)
 	}
+}
+
+func handleGoroutineError(err error, errChan chan<- error) {
+	// If the error is caused by a cancel, we do not need to propagate the error back up
+	if strings.Contains(err.Error(), "context canceled") {
+		return 
+	}
+	errChan <- err
 }
 
 func convertToJson(toConvert any) (string, error) {

@@ -39,6 +39,7 @@ type Job struct {
 
 type JobStore interface {
 	Create(j *Job) error
+	Query(params map[string]string) ([]*Job, error)
 }
 
 type JobService struct {
@@ -135,12 +136,12 @@ func (s *JobService) structureJob(description string) {
 	s.eventService.Publish(&event)
 }
 
-func (s *JobService) CompleteScrapedJob(scrapedJob *ScrapedJob) {
+func (s *JobService) CompleteScrapedJob(scrapedJob *ScrapedJob) *Job {
 	scrapedJobJson, err := json.Marshal(scrapedJob)
 
 	if err != nil {
 		log.Errorf("Failed to convert scraped job to JSON: %s", err.Error())
-		return
+		return nil
 	}
 
 	prompt := fmt.Sprintf(`
@@ -163,7 +164,7 @@ func (s *JobService) CompleteScrapedJob(scrapedJob *ScrapedJob) {
 
 	if err != nil {
 		log.Errorf("Failed to complete scraped job: %s", err.Error())
-		return
+		return nil
 	}
 
 	job.Id = uuid.NewString()
@@ -171,5 +172,12 @@ func (s *JobService) CompleteScrapedJob(scrapedJob *ScrapedJob) {
 
 	if err != nil {
 		log.Errorf("Failed to store job in database: %s", err.Error())
+		return nil
 	}
+
+	return job
+}
+
+func (s *JobService) QueryJobs(params map[string]string) ([]*Job, error) {
+	return s.store.Query(params)
 }

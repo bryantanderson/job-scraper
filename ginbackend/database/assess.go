@@ -2,7 +2,6 @@ package database
 
 import (
 	"encoding/json"
-	"fmt"
 	"sincidium/linkd/api/services"
 
 	"github.com/elastic/go-elasticsearch/v8/typedapi/core/search"
@@ -38,20 +37,25 @@ func (s *AssessStore) Create(a *services.Assessment) error {
 	}
 
 	a.ElasticId = elasticRes.Id_
-	_, err = s.getCollection().InsertOne(s.db.ctx, a)
+	_, err = s.getCollection(s.collectionName).InsertOne(s.db.ctx, a)
 	return err
 }
 
 func (s *AssessStore) CreateInternalJobCriteria(jc *services.Rubric) error {
 	log.Infoln("Creating Linkd job criteria in database")
-	_, err := s.getCollection().InsertOne(s.db.ctx, jc)
+	_, err := s.getCollection(s.collectionName).InsertOne(s.db.ctx, jc)
 	return err
 }
 
-func (s *AssessStore) FindById(userId string) (*services.Assessment, error) {
+func (s *AssessStore) QueryInternalJobCriteria(id string) (*services.Rubric, error) {
+	var rubric services.Rubric
+	err := s.getCollection(s.criteriaCollectionName).FindOne(s.db.ctx, bson.M{"id": id}).Decode(&rubric)
+	return &rubric, err
+}
+
+func (s *AssessStore) FindById(assessmentId string) (*services.Assessment, error) {
 	var a services.Assessment
-	assessmentId := fmt.Sprintf("%s_assessment", userId)
-	err := s.getCollection().FindOne(s.db.ctx, bson.M{"_id": assessmentId}).Decode(&a)
+	err := s.getCollection(s.collectionName).FindOne(s.db.ctx, bson.M{"_id": assessmentId}).Decode(&a)
 	return &a, err
 }
 
@@ -97,7 +101,7 @@ func (s *AssessStore) Delete(userId string) error {
 	}
 
 	// Delete assessment from MongoDB
-	mongoRes, err := s.getCollection().DeleteOne(s.db.ctx, bson.M{"_id": assessment.Id})
+	mongoRes, err := s.getCollection(s.collectionName).DeleteOne(s.db.ctx, bson.M{"_id": assessment.Id})
 	log.Infoln(mongoRes)
 
 	if err != nil {
@@ -110,6 +114,6 @@ func (s *AssessStore) Delete(userId string) error {
 	return nil
 }
 
-func (s *AssessStore) getCollection() *mongo.Collection {
-	return getCollection(s.db, s.db.databaseName, s.collectionName)
+func (s *AssessStore) getCollection(c string) *mongo.Collection {
+	return getCollection(s.db, s.db.databaseName, c)
 }

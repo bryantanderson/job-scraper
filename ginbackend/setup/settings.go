@@ -12,23 +12,23 @@ type ApplicationSettings struct {
 	DatabaseName string
 	DatabaseUri  string
 
-	ServiceBusNamespace         string
-	JobTasksTopic               string
-	JobResultsTopic				string
-	AssessmentTasksTopic        string
-	AssessmentResultsTopic		string
-	ServiceBusConnectionString  string
+	ServiceBusNamespace        string
+	JobTasksTopic              string
+	JobResultsTopic            string
+	AssessmentTasksTopic       string
+	AssessmentResultsTopic     string
+	ServiceBusConnectionString string
 
-	OpenAiApiKey string
+	AzureOpenAiEndpoint string
+	AzureOpenAiApiKey   string
 
-	ElasticCloudId	string
-	ElasticApiKey	string
+	ElasticCloudId string
+	ElasticApiKey  string
 
 	ServerPort         string
 	ServerReadTimeout  time.Duration
 	ServerWriteTimeout time.Duration
 }
-
 
 func ReadApplicationSettings() *ApplicationSettings {
 	err := godotenv.Load()
@@ -68,7 +68,9 @@ func ReadApplicationSettings() *ApplicationSettings {
 	settings.ServerWriteTimeout = time.Duration(ginWriteTimeout)
 	settings.DatabaseName = os.Getenv("DATABASE_NAME")
 	settings.DatabaseUri = os.Getenv("DATABASE_CONNECTION_STRING")
-	settings.OpenAiApiKey = os.Getenv("OPEN_AI_API_KEY")
+
+	settings.AzureOpenAiEndpoint = os.Getenv("AZURE_OPEN_AI_ENDPOINT")
+	settings.AzureOpenAiApiKey = os.Getenv("AZURE_OPEN_AI_API_KEY")
 
 	settings.ElasticCloudId = os.Getenv("ELASTIC_CLOUD_ID")
 	settings.ElasticApiKey = os.Getenv("ELASTIC_API_KEY")

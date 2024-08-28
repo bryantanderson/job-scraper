@@ -120,6 +120,7 @@ type match struct {
 type AssessorStore interface {
 	Create(a *Assessment) error
 	CreateInternalJobCriteria(jc *Rubric) error
+	QueryInternalJobCriteria(id string) (*Rubric, error)
 	FindById(userId string) (*Assessment, error)
 	Query(params map[string]string) ([]*Assessment, error)
 	Delete(userId string) error
@@ -190,7 +191,7 @@ func (a *AssessorService) worker(i int, mChan <-chan []byte) {
 func (a *AssessorService) AssessCandidate(payload *AssessPayload) {
 	ca := CandidateAssessment{
 		Assessment: Assessment{
-			Id:    fmt.Sprintf("%s_%s", payload.UserId, "assessment"),
+			Id:    a.UserIdToAssessmentId(payload.UserId),
 			JobId: payload.Job.Id,
 		},
 		client: a.client,
@@ -260,7 +261,7 @@ func (a *AssessorService) AssessCandidate(payload *AssessPayload) {
 }
 
 func (a *AssessorService) GetAssessment(userId string) (*Assessment, error) {
-	assessment, err := a.store.FindById(userId)
+	assessment, err := a.store.FindById(a.UserIdToAssessmentId(userId))
 	return assessment, err
 }
 
@@ -269,6 +270,13 @@ func (a *AssessorService) QueryAssessments(params map[string]string) ([]*Assessm
 }
 
 func (a *AssessorService) createCriteria(job *Job) (*Rubric, error) {
+	// Check if a criteria for the job already exists
+	existingRubric, err := a.store.QueryInternalJobCriteria(a.jobIdToRubricId(job.Id))
+
+	if err == nil && existingRubric != nil {
+		return existingRubric, nil
+	}
+	
 	responsibilities, _ := convertToJson(job.Responsibilities)
 	prompt := fmt.Sprintf(`
 	Given the job description, use the job responsibilities as a criteria to craft a criteria that a candidate can be assessed against.
@@ -290,11 +298,25 @@ func (a *AssessorService) createCriteria(job *Job) (*Rubric, error) {
 	)
 	_ = resp
 	rubric := Rubric{
-		Id:     fmt.Sprintf("%s_criteria", job.Id),
+		Id:     a.jobIdToRubricId(job.Id),
 		Points: rubricInstruct.Points,
 	}
 	return &rubric, err
 }
+
+func (a *AssessorService) UserIdToAssessmentId(userId string) string {
+	return fmt.Sprintf("%s_assessment", userId)
+}
+
+func (a *AssessorService) jobIdToRubricId(jobId string) string {
+	return fmt.Sprintf("%s_criteria", jobId)
+}
+
+/* 
+
+Candidate Assessment receivers from this point onward.
+
+*/
 
 func (ca *CandidateAssessment) assessRequirements(
 	ctx context.Context, payload *AssessPayload, wg *sync.WaitGroup, errChan chan<- error,
@@ -305,7 +327,7 @@ func (ca *CandidateAssessment) assessRequirements(
 
 	if err != nil {
 		log.Errorln("Error converting educations to JSON:", err)
-		errChan <- err
+		handleGoroutineError(err, errChan)
 		return
 	}
 
@@ -313,7 +335,7 @@ func (ca *CandidateAssessment) assessRequirements(
 
 	if err != nil {
 		log.Errorln("Error converting qualifications to JSON:", err)
-		errChan <- err
+		handleGoroutineError(err, errChan)
 		return
 	}
 
@@ -336,7 +358,6 @@ func (ca *CandidateAssessment) assessRequirements(
 	select {
 	case <-ctx.Done():
 		log.Errorln("Context canceled, aborting assessRequirements")
-		errChan <- ctx.Err()
 		return
 	default:
 		resp, err := ca.client.CreateChatCompletion(
@@ -345,9 +366,10 @@ func (ca *CandidateAssessment) assessRequirements(
 			&p,
 		)
 		_ = resp // sends back original response so no information loss from original API
+
 		if err != nil {
 			log.Errorf("assessRequirements OpenAI call has failed with error %v\n", err)
-			errChan <- err
+			handleGoroutineError(err, errChan)
 			return
 		}
 	}
@@ -367,7 +389,7 @@ func (ca *CandidateAssessment) assessCompatibility(
 
 	if err != nil {
 		log.Errorln("Error converting job description to JSON:", err)
-		errChan <- err
+		handleGoroutineError(err, errChan)
 		return
 	}
 
@@ -387,7 +409,6 @@ func (ca *CandidateAssessment) assessCompatibility(
 	select {
 	case <-ctx.Done():
 		log.Errorln("Context canceled, aborting assessCompatibility")
-		errChan <- ctx.Err()
 		return
 	default:
 		resp, err := ca.client.CreateChatCompletion(
@@ -399,7 +420,7 @@ func (ca *CandidateAssessment) assessCompatibility(
 
 		if err != nil {
 			log.Errorf("assessCompatibility OpenAI call has failed with error %v\n", err)
-			errChan <- err
+			handleGoroutineError(err, errChan)
 			return
 		}
 	}
@@ -439,9 +460,7 @@ func (ca *CandidateAssessment) assessLocation(
 	select {
 	case <-ctx.Done():
 		log.Errorln("Context canceled, aborting assessLocation")
-		errChan <- ctx.Err()
 		return
-
 	default:
 		resp, err := ca.client.CreateChatCompletion(
 			ctx,
@@ -452,7 +471,7 @@ func (ca *CandidateAssessment) assessLocation(
 
 		if err != nil {
 			log.Errorf("assessLocation OpenAI call has failed with error %v\n", err)
-			errChan <- err
+			handleGoroutineError(err, errChan)
 			return
 		}
 	}
@@ -481,7 +500,7 @@ func (ca *CandidateAssessment) assessResponsibilities(
 
 	if err != nil {
 		log.Errorln("Error converting job rubric to JSON:", err)
-		errChan <- err
+		handleGoroutineError(err, errChan)
 		return
 	}
 
@@ -489,7 +508,7 @@ func (ca *CandidateAssessment) assessResponsibilities(
 
 	if err != nil {
 		log.Errorln("Error converting candidate experience to JSON:", err)
-		errChan <- err
+		handleGoroutineError(err, errChan)
 		return
 	}
 
@@ -507,7 +526,6 @@ func (ca *CandidateAssessment) assessResponsibilities(
 	select {
 	case <-ctx.Done():
 		log.Errorln("Context canceled, aborting assessResponsibilities")
-		errChan <- ctx.Err()
 		return
 	default:
 		resp, err := ca.client.CreateChatCompletion(
@@ -519,7 +537,7 @@ func (ca *CandidateAssessment) assessResponsibilities(
 
 		if err != nil {
 			log.Errorf("assessResponsibilities OpenAI call has failed with error %v\n", err)
-			errChan <- err
+			handleGoroutineError(err, errChan)
 			return
 		}
 	}
@@ -539,7 +557,7 @@ func (ca *CandidateAssessment) assessSkills(
 
 	if err != nil {
 		log.Errorln("Error converting rubric to JSON:", err)
-		errChan <- err
+		handleGoroutineError(err, errChan)
 		return
 	}
 
@@ -547,7 +565,7 @@ func (ca *CandidateAssessment) assessSkills(
 
 	if err != nil {
 		log.Errorln("Error converting candidate skills to JSON:", err)
-		errChan <- err
+		handleGoroutineError(err, errChan)
 		return
 	}
 
@@ -564,7 +582,6 @@ func (ca *CandidateAssessment) assessSkills(
 	select {
 	case <-ctx.Done():
 		log.Errorln("Context canceled, aborting assessSkills")
-		errChan <- ctx.Err()
 		return
 	default:
 		resp, err := ca.client.CreateChatCompletion(
@@ -576,7 +593,7 @@ func (ca *CandidateAssessment) assessSkills(
 
 		if err != nil {
 			log.Errorf("assessSkills OpenAI call has failed with error %v\n", err)
-			errChan <- err
+			handleGoroutineError(err, errChan)
 			return
 		}
 	}

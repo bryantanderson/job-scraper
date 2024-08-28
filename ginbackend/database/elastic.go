@@ -96,3 +96,4 @@ func (s *ElasticDatabase) DeleteDocument(ctx context.Context, indexName, id stri
 	res, err := s.client.Delete(indexName, id).Do(ctx)
 	return res, err
 }
+

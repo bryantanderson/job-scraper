@@ -66,7 +66,7 @@ func (s *Server) AddRoutes(
 	jobService := services.NewJobService(s.Settings, client, eventService, jobStore)
 
 	// Instantiate scraper service
-	scraperService := services.NewScraperService(jobService)
+	scraperService := services.NewScraperService(jobService, assessorService)
 
 	s.EventService = eventService
 	s.DummyService = dummyService

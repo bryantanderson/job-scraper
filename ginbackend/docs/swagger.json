@@ -24,9 +24,9 @@
                 }
             }
         },
-        "/scrape": {
+        "/scrape/seek": {
             "post": {
-                "description": "Scrapes a given URL",
+                "description": "Scrapes a seek job page for Software Engineering Jobs. Accepts a \"candidate\" and ranks the candidate against the job postings.",
                 "consumes": [
                     "application/json"
                 ],
@@ -36,11 +36,138 @@
                 "tags": [
                     "Scrape"
                 ],
-                "summary": "Scrapes a given URL",
+                "summary": "Scrapes a seek job page",
+                "parameters": [
+                    {
+                        "description": "Request payload",
+                        "name": "data",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/services.ScrapeSeekPayload"
+                        }
+                    }
+                ],
                 "responses": {
                     "200": {
                         "description": "OK"
                     }
+                }
+            }
+        },
+        "/scrape/seek/{user}": {
+            "get": {
+                "description": "Fetches the assessments made for a particular candidate, in relation to scraped jobs.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Scrape"
+                ],
+                "summary": "Fetches the assessments made for a particular candidate, in relation to scraped jobs.",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "User ID",
+                        "name": "user",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK"
+                    }
+                }
+            }
+        }
+    },
+    "definitions": {
+        "services.Candidate": {
+            "type": "object",
+            "properties": {
+                "education": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/services.Education"
+                    }
+                },
+                "experiences": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/services.Experience"
+                    }
+                },
+                "location": {
+                    "type": "string"
+                },
+                "skills": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/services.Skill"
+                    }
+                },
+                "summary": {
+                    "type": "string"
+                }
+            }
+        },
+        "services.Education": {
+            "type": "object",
+            "properties": {
+                "description": {
+                    "type": "string"
+                },
+                "institute": {
+                    "type": "string"
+                },
+                "title": {
+                    "type": "string"
+                }
+            }
+        },
+        "services.Experience": {
+            "type": "object",
+            "properties": {
+                "company": {
+                    "type": "string"
+                },
+                "description": {
+                    "type": "string"
+                },
+                "endDate": {
+                    "type": "string"
+                },
+                "isCurrent": {
+                    "type": "boolean"
+                },
+                "startDate": {
+                    "type": "string"
+                },
+                "title": {
+                    "type": "string"
+                }
+            }
+        },
+        "services.ScrapeSeekPayload": {
+            "type": "object",
+            "properties": {
+                "candidate": {
+                    "$ref": "#/definitions/services.Candidate"
+                },
+                "userId": {
+                    "type": "string"
+                }
+            }
+        },
+        "services.Skill": {
+            "type": "object",
+            "properties": {
+                "description": {
+                    "type": "string"
                 }
             }
         }

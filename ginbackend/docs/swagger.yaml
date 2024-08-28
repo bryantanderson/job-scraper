@@ -1,3 +1,59 @@
+definitions:
+  services.Candidate:
+    properties:
+      education:
+        items:
+          $ref: '#/definitions/services.Education'
+        type: array
+      experiences:
+        items:
+          $ref: '#/definitions/services.Experience'
+        type: array
+      location:
+        type: string
+      skills:
+        items:
+          $ref: '#/definitions/services.Skill'
+        type: array
+      summary:
+        type: string
+    type: object
+  services.Education:
+    properties:
+      description:
+        type: string
+      institute:
+        type: string
+      title:
+        type: string
+    type: object
+  services.Experience:
+    properties:
+      company:
+        type: string
+      description:
+        type: string
+      endDate:
+        type: string
+      isCurrent:
+        type: boolean
+      startDate:
+        type: string
+      title:
+        type: string
+    type: object
+  services.ScrapeSeekPayload:
+    properties:
+      candidate:
+        $ref: '#/definitions/services.Candidate'
+      userId:
+        type: string
+    type: object
+  services.Skill:
+    properties:
+      description:
+        type: string
+    type: object
 info:
   contact: {}
 paths:
@@ -14,17 +70,46 @@ paths:
       summary: Health check
       tags:
       - health
-  /scrape:
+  /scrape/seek:
     post:
       consumes:
       - application/json
-      description: Scrapes a given URL
+      description: Scrapes a seek job page for Software Engineering Jobs. Accepts
+        a "candidate" and ranks the candidate against the job postings.
+      parameters:
+      - description: Request payload
+        in: body
+        name: data
+        required: true
+        schema:
+          $ref: '#/definitions/services.ScrapeSeekPayload'
       produces:
       - application/json
       responses:
         "200":
           description: OK
-      summary: Scrapes a given URL
+      summary: Scrapes a seek job page
+      tags:
+      - Scrape
+  /scrape/seek/{user}:
+    get:
+      consumes:
+      - application/json
+      description: Fetches the assessments made for a particular candidate, in relation
+        to scraped jobs.
+      parameters:
+      - description: User ID
+        in: path
+        name: user
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+      summary: Fetches the assessments made for a particular candidate, in relation
+        to scraped jobs.
       tags:
       - Scrape
 swagger: "2.0"
