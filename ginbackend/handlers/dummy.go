@@ -38,7 +38,7 @@ func (s *Server) handleDummyCreate() gin.HandlerFunc {
 			return
 		}
 
-		dummy, err := s.DummyService.CreateDummy(c, &dto)
+		dummy, err := s.DummyService.CreateDummy(&dto)
 
 		if err != nil {
 			handleInternalError(c, err)
@@ -63,7 +63,7 @@ func (s *Server) handleDummyCreate() gin.HandlerFunc {
 func (s *Server) handleDummyGet() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		id := c.Param("id")
-		dummy, err := s.DummyService.GetDummy(c, id)
+		dummy, err := s.DummyService.GetDummy(id)
 
 		if err == mongo.ErrNoDocuments {
 			c.JSON(http.StatusNotFound, "Dummy not found")
@@ -101,7 +101,7 @@ func (s *Server) handleDummyUpdate() gin.HandlerFunc {
 		}
 
 		id := c.Param("id")
-		updatedDummy, err := s.DummyService.UpdateDummy(c, &dto, id)
+		updatedDummy, err := s.DummyService.UpdateDummy(&dto, id)
 
 		if err != nil {
 			handleInternalError(c, err)
@@ -124,7 +124,7 @@ func (s *Server) handleDummyUpdate() gin.HandlerFunc {
 func (s *Server) handleDummyDelete() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		id := c.Param("id")
-		err := s.DummyService.DeleteDummy(c, id)
+		err := s.DummyService.DeleteDummy(id)
 
 		if err != nil {
 			handleInternalError(c, err)

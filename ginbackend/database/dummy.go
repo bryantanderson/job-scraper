@@ -44,5 +44,5 @@ func (s *DummyStore) DeleteById(id string) error {
 }
 
 func (s *DummyStore) getCollection() *mongo.Collection {
-	return s.db.client.Database(s.databaseName).Collection(s.collectionName)
+	return s.db.client.Database(s.db.databaseName).Collection(s.collectionName)
 }

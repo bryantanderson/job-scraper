@@ -96,7 +96,112 @@ const docTemplate = `{
                 }
             }
         },
-        "/dummy": {
+        "/candidates/": {
+            "post": {
+                "description": "Creates a candidate.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Candidate"
+                ],
+                "summary": "Creates a candidate.",
+                "parameters": [
+                    {
+                        "description": "Request payload",
+                        "name": "data",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/services.CandidateDto"
+                        }
+                    }
+                ],
+                "responses": {
+                    "201": {
+                        "description": "Created",
+                        "schema": {
+                            "$ref": "#/definitions/services.Candidate"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request"
+                    },
+                    "500": {
+                        "description": "Internal Server Error"
+                    }
+                }
+            }
+        },
+        "/candidates/{id}": {
+            "get": {
+                "description": "Gets a candidate.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Candidate"
+                ],
+                "summary": "Gets a candidate.",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Candidate ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "201": {
+                        "description": "Created",
+                        "schema": {
+                            "$ref": "#/definitions/services.Candidate"
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found"
+                    },
+                    "500": {
+                        "description": "Internal Server Error"
+                    }
+                }
+            },
+            "delete": {
+                "description": "Deletes an existing candidate.",
+                "consumes": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Candidate"
+                ],
+                "summary": "Deletes an existing candidate.",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Candidate ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "204": {
+                        "description": "No Content"
+                    },
+                    "500": {
+                        "description": "Internal Server Error"
+                    }
+                }
+            }
+        },
+        "/dummies/": {
             "post": {
                 "description": "Creates a dummy.",
                 "consumes": [
@@ -136,7 +241,7 @@ const docTemplate = `{
                 }
             }
         },
-        "/dummy/{id}": {
+        "/dummies/{id}": {
             "get": {
                 "description": "Gets a dummy.",
                 "consumes": [
@@ -402,6 +507,9 @@ const docTemplate = `{
                         "$ref": "#/definitions/services.Experience"
                     }
                 },
+                "id": {
+                    "type": "string"
+                },
                 "location": {
                     "type": "string"
                 },
@@ -409,6 +517,35 @@ const docTemplate = `{
                     "type": "array",
                     "items": {
                         "$ref": "#/definitions/services.Skill"
+                    }
+                },
+                "summary": {
+                    "type": "string"
+                }
+            }
+        },
+        "services.CandidateDto": {
+            "type": "object",
+            "properties": {
+                "education": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/services.Education"
+                    }
+                },
+                "experiences": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/services.Experience"
+                    }
+                },
+                "location": {
+                    "type": "string"
+                },
+                "skills": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
                     }
                 },
                 "summary": {

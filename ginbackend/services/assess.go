@@ -47,33 +47,6 @@ type AssessPayload struct {
 	Candidate Candidate `json:"candidate"`
 }
 
-type Candidate struct {
-	Education   []Education  `json:"education"`
-	Experiences []Experience `json:"experiences"`
-	Skills      []Skill      `json:"skills"`
-	Summary     string       `json:"summary"`
-	Location    string       `json:"location"`
-}
-
-type Skill struct {
-	Description string `json:"description"`
-}
-
-type Education struct {
-	Title       string `json:"title"`
-	Institute   string `json:"institute"`
-	Description string `json:"description"`
-}
-
-type Experience struct {
-	Title       string     `json:"title"`
-	Company     string     `json:"company"`
-	Description string     `json:"description"`
-	StartDate   time.Time  `json:"startDate"`
-	EndDate     *time.Time `json:"endDate"`
-	IsCurrent   bool       `json:"isCurrent"`
-}
-
 type CandidateAssessment struct {
 	mu         sync.Mutex
 	Assessment Assessment

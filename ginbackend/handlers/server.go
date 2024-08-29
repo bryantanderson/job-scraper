@@ -21,6 +21,7 @@ type Server struct {
 	JobService      *services.JobService
 	AssessorService *services.AssessorService
 	ScraperService 	*services.ScraperService
+	CandidateService *services.CandidateService
 }
 
 func NewServer(settings *setup.ApplicationSettings) *Server {
@@ -42,6 +43,7 @@ func (s *Server) AddRoutes(
 	s.Router.Use(middleware.ErrorHandler)
 
 	s.registerAssessRoutes()
+	s.registerCandidateRoutes()
 	s.registerHealthRoutes()
 	s.registerDummyRoutes()
 	s.registerScrapeRoutes()
@@ -52,6 +54,10 @@ func (s *Server) AddRoutes(
 
 	// Instantiate event service
 	eventService := services.NewEventService(s.Settings)
+
+	// Instantiate candidate service
+	candidateStore := database.NewCandidateStore(db)
+	candidateService := services.NewCandidateService(candidateStore)
 
 	// Instantiate dummy service
 	dummyStore := database.NewDummyStore(db)
@@ -71,6 +77,7 @@ func (s *Server) AddRoutes(
 	s.EventService = eventService
 	s.DummyService = dummyService
 	s.JobService = jobService
+	s.CandidateService = candidateService
 	s.AssessorService = assessorService
 	s.ScraperService = scraperService
 }

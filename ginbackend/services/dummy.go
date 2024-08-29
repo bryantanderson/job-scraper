@@ -1,7 +1,6 @@
 package services
 
 import (
-	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
 )
 
@@ -31,7 +30,7 @@ func NewDummyService(store DummyStore) *DummyService {
 	}
 }
 
-func (s *DummyService) CreateDummy(c *gin.Context, dto *DummyDto) (*Dummy, error) {
+func (s *DummyService) CreateDummy(dto *DummyDto) (*Dummy, error) {
 	dummy := Dummy{
 		Id:   uuid.NewString(),
 		Name: dto.Name,
@@ -43,7 +42,7 @@ func (s *DummyService) CreateDummy(c *gin.Context, dto *DummyDto) (*Dummy, error
 	return &dummy, nil
 }
 
-func (s *DummyService) GetDummy(c *gin.Context, id string) (*Dummy, error) {
+func (s *DummyService) GetDummy(id string) (*Dummy, error) {
 	dummy, err := s.store.FindById(id)
 	if err != nil {
 		return nil, err
@@ -51,7 +50,7 @@ func (s *DummyService) GetDummy(c *gin.Context, id string) (*Dummy, error) {
 	return dummy, nil
 }
 
-func (s *DummyService) UpdateDummy(c *gin.Context, dto *DummyDto, id string) (*Dummy, error) {
+func (s *DummyService) UpdateDummy(dto *DummyDto, id string) (*Dummy, error) {
 	updatedDummy, err := s.store.Update(dto, id)
 	if err != nil {
 		return nil, err
@@ -59,7 +58,7 @@ func (s *DummyService) UpdateDummy(c *gin.Context, dto *DummyDto, id string) (*D
 	return updatedDummy, nil
 }
 
-func (s *DummyService) DeleteDummy(c *gin.Context, id string) error {
+func (s *DummyService) DeleteDummy(id string) error {
 	err := s.store.DeleteById(id)
 	return err
 }

@@ -65,11 +65,10 @@ func TestCreateAndGetDummy(t *testing.T) {
 	fakeStore := NewFakeDummyStore()
 	sut := services.NewDummyService(fakeStore)
 
-	ctx := getTestContext()
 	dto := &services.DummyDto{Name: "Test"}
 
 	// Create dummy and make assertions
-	createdDummy, err := sut.CreateDummy(ctx, dto)
+	createdDummy, err := sut.CreateDummy(dto)
 
 	assert.NoError(t, err)
 	assert.NotNil(t, createdDummy)
@@ -77,7 +76,7 @@ func TestCreateAndGetDummy(t *testing.T) {
 	assert.NotEmpty(t, createdDummy.Id)
 
 	// Find dummy and make assertions
-	storedDummy, err := sut.GetDummy(ctx, createdDummy.Id)
+	storedDummy, err := sut.GetDummy(createdDummy.Id)
 
 	assert.NoError(t, err)
 	assert.Equal(t, createdDummy.Name, storedDummy.Name)
@@ -89,17 +88,16 @@ func TestUpdateDummy(t *testing.T) {
 	fakeStore := NewFakeDummyStore()
 	sut := services.NewDummyService(fakeStore)
 
-	ctx := getTestContext()
 	dto := &services.DummyDto{Name: "Test"}
 
 	// Create dummy
-	createdDummy, err := sut.CreateDummy(ctx, dto)
+	createdDummy, err := sut.CreateDummy(dto)
 
 	assert.NoError(t, err)
 
 	// Update dummy with new data and make assertions
 	updateDto := &services.DummyDto{Name: "Updated Test"}
-	updatedDummy, err := sut.UpdateDummy(ctx, updateDto, createdDummy.Id)
+	updatedDummy, err := sut.UpdateDummy(updateDto, createdDummy.Id)
 
 	assert.NoError(t, err)
 	assert.Equal(t, updateDto.Name, updatedDummy.Name)
@@ -111,21 +109,20 @@ func TestDeleteDummy(t *testing.T) {
 	fakeStore := NewFakeDummyStore()
 	sut := services.NewDummyService(fakeStore)
 
-	ctx := getTestContext()
 	dto := &services.DummyDto{Name: "Test"}
 
 	// Create dummy
-	createdDummy, err := sut.CreateDummy(ctx, dto)
+	createdDummy, err := sut.CreateDummy(dto)
 
 	assert.NoError(t, err)
 
 	// Delete dummy and make assertions
-	err = sut.DeleteDummy(ctx, createdDummy.Id)
+	err = sut.DeleteDummy(createdDummy.Id)
 
 	assert.NoError(t, err)
 
 	// Check that the dummy no longer exists
-	existingDummy, err := sut.GetDummy(ctx, createdDummy.Id)
+	existingDummy, err := sut.GetDummy(createdDummy.Id)
 
 	assert.Error(t, err)
 	assert.Nil(t, existingDummy)
