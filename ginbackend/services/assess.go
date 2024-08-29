@@ -141,7 +141,7 @@ func NewAssessorService(
 	e *EventService,
 	as AssessorStore,
 ) *AssessorService {
-	srv := &AssessorService{
+	service := &AssessorService{
 		inTopic:             s.AssessmentTasksTopic,
 		inTopicSubscription: topicNameToSubscriptionName(s.AssessmentTasksTopic),
 		outTopic:            s.AssessmentResultsTopic,
@@ -149,8 +149,8 @@ func NewAssessorService(
 		store:               as,
 		eventService:        e,
 	}
-	srv.registerSubscribers()
-	return srv
+	service.registerSubscribers()
+	return service
 }
 
 func (a *AssessorService) registerSubscribers() {
