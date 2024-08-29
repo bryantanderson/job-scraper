@@ -20,10 +20,11 @@ func (s *Server) registerScrapeRoutes() {
 // @Summary Scrapes a seek job page 
 // @Tags Scrape
 // @Description Scrapes a seek job page for Software Engineering Jobs. Accepts a "candidate" and ranks the candidate against the job postings.
-// @Param data body services.ScrapeSeekPayload true "Request payload"
+// @Param data body services.ScrapeSeekPayload true "Request body"
 // @Accept json
 // @Produce json
-// @Success 200
+// @Success 200 {array} services.ScrapedJob
+// @Failure 400
 // @Router /scrape/seek [post]
 func (s *Server) handleSeekScrape() gin.HandlerFunc {
 	return func(c *gin.Context) {
@@ -35,7 +36,7 @@ func (s *Server) handleSeekScrape() gin.HandlerFunc {
 		}
 
 		scrapedJobs := s.ScraperService.ScrapeSeek(&payload)
-		c.JSON(http.StatusOK, makeData(scrapedJobs))
+		c.JSON(http.StatusOK, scrapedJobs)
 	}
 }
 
@@ -46,7 +47,9 @@ func (s *Server) handleSeekScrape() gin.HandlerFunc {
 // @Param user path string true "User ID"
 // @Accept json
 // @Produce json
-// @Success 200
+// @Success 200 {array} services.ScrapedJobAssessment
+// @Failure 400
+// @Failure 500
 // @Router /scrape/seek/{user} [get]
 func (s *Server) handleSeekScrapeGet() gin.HandlerFunc {
 	return func(c *gin.Context) {
@@ -64,6 +67,6 @@ func (s *Server) handleSeekScrapeGet() gin.HandlerFunc {
 			return
 		}
 
-		c.JSON(http.StatusOK, makeData(assessments))
+		c.JSON(http.StatusOK, assessments)
 	}
 }

@@ -15,6 +15,237 @@ const docTemplate = `{
     "host": "{{.Host}}",
     "basePath": "{{.BasePath}}",
     "paths": {
+        "/assessments/": {
+            "get": {
+                "description": "Queries for an existing assessment.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Assessment"
+                ],
+                "summary": "Queries for an existing assessment.",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "ID of the job the assessment is based on",
+                        "name": "jobId",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "The score attained in the assessment",
+                        "name": "score",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "$ref": "#/definitions/services.Assessment"
+                            }
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error"
+                    }
+                }
+            }
+        },
+        "/assessments/{userId}": {
+            "get": {
+                "description": "Gets an existing assessment.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Assessment"
+                ],
+                "summary": "Gets an existing assessment.",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "User ID",
+                        "name": "userId",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/services.Assessment"
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found"
+                    },
+                    "500": {
+                        "description": "Internal Server Error"
+                    }
+                }
+            }
+        },
+        "/dummy": {
+            "post": {
+                "description": "Creates a dummy.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Dummy"
+                ],
+                "summary": "Creates a dummy.",
+                "parameters": [
+                    {
+                        "description": "Request payload",
+                        "name": "data",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/services.DummyDto"
+                        }
+                    }
+                ],
+                "responses": {
+                    "201": {
+                        "description": "Created",
+                        "schema": {
+                            "$ref": "#/definitions/services.Dummy"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request"
+                    },
+                    "500": {
+                        "description": "Internal Server Error"
+                    }
+                }
+            }
+        },
+        "/dummy/{id}": {
+            "get": {
+                "description": "Gets a dummy.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Dummy"
+                ],
+                "summary": "Gets a dummy.",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Dummy ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "201": {
+                        "description": "Created",
+                        "schema": {
+                            "$ref": "#/definitions/services.Dummy"
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found"
+                    },
+                    "500": {
+                        "description": "Internal Server Error"
+                    }
+                }
+            },
+            "post": {
+                "description": "Updates an existing dummy.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Dummy"
+                ],
+                "summary": "Updates an existing dummy.",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Dummy ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "Request body",
+                        "name": "data",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/services.DummyDto"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/services.Dummy"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request"
+                    },
+                    "500": {
+                        "description": "Internal Server Error"
+                    }
+                }
+            },
+            "delete": {
+                "description": "Deletes an existing dummy.",
+                "consumes": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Dummy"
+                ],
+                "summary": "Deletes an existing dummy.",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Dummy ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "204": {
+                        "description": "No Content"
+                    },
+                    "500": {
+                        "description": "Internal Server Error"
+                    }
+                }
+            }
+        },
         "/health": {
             "get": {
                 "description": "Health check ping",
@@ -25,7 +256,7 @@ const docTemplate = `{
                     "application/json"
                 ],
                 "tags": [
-                    "health"
+                    "Health"
                 ],
                 "summary": "Health check",
                 "responses": {
@@ -50,7 +281,7 @@ const docTemplate = `{
                 "summary": "Scrapes a seek job page",
                 "parameters": [
                     {
-                        "description": "Request payload",
+                        "description": "Request body",
                         "name": "data",
                         "in": "body",
                         "required": true,
@@ -61,7 +292,16 @@ const docTemplate = `{
                 ],
                 "responses": {
                     "200": {
-                        "description": "OK"
+                        "description": "OK",
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "$ref": "#/definitions/services.ScrapedJob"
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request"
                     }
                 }
             }
@@ -90,13 +330,63 @@ const docTemplate = `{
                 ],
                 "responses": {
                     "200": {
-                        "description": "OK"
+                        "description": "OK",
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "$ref": "#/definitions/services.ScrapedJobAssessment"
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request"
+                    },
+                    "500": {
+                        "description": "Internal Server Error"
                     }
                 }
             }
         }
     },
     "definitions": {
+        "services.Assessment": {
+            "type": "object",
+            "properties": {
+                "compatibilityPoint": {
+                    "$ref": "#/definitions/services.point"
+                },
+                "createdAt": {
+                    "type": "string"
+                },
+                "elasticId": {
+                    "type": "string"
+                },
+                "experiencePoint": {
+                    "type": "boolean"
+                },
+                "id": {
+                    "type": "string"
+                },
+                "jobId": {
+                    "type": "string"
+                },
+                "locationMatch": {
+                    "$ref": "#/definitions/services.match"
+                },
+                "requirementPoint": {
+                    "$ref": "#/definitions/services.point"
+                },
+                "responsibilityScore": {
+                    "$ref": "#/definitions/services.score"
+                },
+                "score": {
+                    "type": "integer"
+                },
+                "skillsScore": {
+                    "$ref": "#/definitions/services.score"
+                }
+            }
+        },
         "services.Candidate": {
             "type": "object",
             "properties": {
@@ -122,6 +412,25 @@ const docTemplate = `{
                     }
                 },
                 "summary": {
+                    "type": "string"
+                }
+            }
+        },
+        "services.Dummy": {
+            "type": "object",
+            "properties": {
+                "id": {
+                    "type": "string"
+                },
+                "name": {
+                    "type": "string"
+                }
+            }
+        },
+        "services.DummyDto": {
+            "type": "object",
+            "properties": {
+                "name": {
                     "type": "string"
                 }
             }
@@ -163,6 +472,60 @@ const docTemplate = `{
                 }
             }
         },
+        "services.Job": {
+            "type": "object",
+            "properties": {
+                "description": {
+                    "type": "string"
+                },
+                "elasticId": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "string"
+                },
+                "location": {
+                    "type": "string"
+                },
+                "locationType": {
+                    "type": "string"
+                },
+                "qualifications": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/services.Qualification"
+                    }
+                },
+                "responsibilities": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/services.Responsibility"
+                    }
+                },
+                "title": {
+                    "type": "string"
+                },
+                "yearsOfExperience": {
+                    "type": "integer"
+                }
+            }
+        },
+        "services.Qualification": {
+            "type": "object",
+            "properties": {
+                "description": {
+                    "type": "string"
+                }
+            }
+        },
+        "services.Responsibility": {
+            "type": "object",
+            "properties": {
+                "description": {
+                    "type": "string"
+                }
+            }
+        },
         "services.ScrapeSeekPayload": {
             "type": "object",
             "properties": {
@@ -174,11 +537,69 @@ const docTemplate = `{
                 }
             }
         },
+        "services.ScrapedJob": {
+            "type": "object",
+            "properties": {
+                "company": {
+                    "type": "string"
+                },
+                "description": {
+                    "type": "string"
+                },
+                "location": {
+                    "type": "string"
+                },
+                "title": {
+                    "type": "string"
+                }
+            }
+        },
+        "services.ScrapedJobAssessment": {
+            "type": "object",
+            "properties": {
+                "assessment": {
+                    "$ref": "#/definitions/services.Assessment"
+                },
+                "job": {
+                    "$ref": "#/definitions/services.Job"
+                }
+            }
+        },
         "services.Skill": {
             "type": "object",
             "properties": {
                 "description": {
                     "type": "string"
+                }
+            }
+        },
+        "services.match": {
+            "type": "object",
+            "properties": {
+                "isMatch": {
+                    "type": "boolean"
+                }
+            }
+        },
+        "services.point": {
+            "type": "object",
+            "properties": {
+                "explanation": {
+                    "type": "string"
+                },
+                "isValid": {
+                    "type": "boolean"
+                }
+            }
+        },
+        "services.score": {
+            "type": "object",
+            "properties": {
+                "explanation": {
+                    "type": "string"
+                },
+                "score": {
+                    "type": "integer"
                 }
             }
         }

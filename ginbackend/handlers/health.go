@@ -11,7 +11,7 @@ func (s *Server) registerHealthRoutes() {
 
 // Health Check godoc
 // @Summary Health check
-// @Tags health
+// @Tags Health
 // @Description Health check ping
 // @Accept json
 // @Produce json
@@ -19,6 +19,6 @@ func (s *Server) registerHealthRoutes() {
 // @Router /health [get]
 func (s *Server) handleHealthCheck() gin.HandlerFunc {
 	return func(c *gin.Context) {
-		c.JSON(http.StatusOK, gin.H{"message": "Health OK"})
+		c.JSON(http.StatusOK, "Health OK")
 	}
 }

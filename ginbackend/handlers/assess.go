@@ -1,11 +1,12 @@
 package handlers
 
 import (
-	"github.com/gin-gonic/gin"
-	"go.mongodb.org/mongo-driver/mongo"
 	"net/http"
 	"reflect"
 	"sincidium/linkd/api/services"
+
+	"github.com/gin-gonic/gin"
+	"go.mongodb.org/mongo-driver/mongo"
 )
 
 func (s *Server) registerAssessRoutes() {
@@ -16,6 +17,17 @@ func (s *Server) registerAssessRoutes() {
 	}
 }
 
+// handleAssessmentGet godoc
+// @Summary Gets an existing assessment.
+// @Tags Assessment
+// @Description Gets an existing assessment.
+// @Param userId path string true "User ID"
+// @Accept json
+// @Produce json
+// @Success 200 {object} services.Assessment
+// @Failure 404
+// @Failure 500
+// @Router /assessments/{userId} [get]
 func (s *Server) handleAssessmentGet() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		userId := c.Param("userId")
@@ -31,10 +43,21 @@ func (s *Server) handleAssessmentGet() gin.HandlerFunc {
 			return
 		}
 
-		c.JSON(http.StatusOK, makeData(assessment))
+		c.JSON(http.StatusOK, assessment)
 	}
 }
 
+// handleAssessmentQuery godoc
+// @Summary Queries for an existing assessment.
+// @Tags Assessment
+// @Description Queries for an existing assessment.
+// @Param jobId query string false "ID of the job the assessment is based on"
+// @Param score query string false "The score attained in the assessment"
+// @Accept json
+// @Produce json
+// @Success 200 {array} services.Assessment
+// @Failure 500
+// @Router /assessments/ [get]
 func (s *Server) handleAssessmentQuery() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		params := make(map[string]string)
@@ -64,6 +87,6 @@ func (s *Server) handleAssessmentQuery() gin.HandlerFunc {
 			return
 		}
 
-		c.JSON(http.StatusOK, makeData(assessments))
+		c.JSON(http.StatusOK, assessments)
 	}
 }

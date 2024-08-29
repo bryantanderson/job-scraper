@@ -18,6 +18,17 @@ func (s *Server) registerDummyRoutes() {
 	}
 }
 
+// handleDummyCreate godoc
+// @Summary Creates a dummy.
+// @Tags Dummy
+// @Description Creates a dummy.
+// @Param data body services.DummyDto true "Request payload"
+// @Accept json
+// @Produce json
+// @Success 201 {object} services.Dummy
+// @Failure 400
+// @Failure 500
+// @Router /dummies/ [post]
 func (s *Server) handleDummyCreate() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		var dto services.DummyDto
@@ -34,10 +45,21 @@ func (s *Server) handleDummyCreate() gin.HandlerFunc {
 			return
 		}
 
-		c.JSON(http.StatusCreated, makeData(*dummy))
+		c.JSON(http.StatusCreated, *dummy)
 	}
 }
 
+// handleDummyGet godoc
+// @Summary Gets a dummy.
+// @Tags Dummy
+// @Description Gets a dummy.
+// @Param id path string true "Dummy ID"
+// @Accept json
+// @Produce json
+// @Success 201 {object} services.Dummy
+// @Failure 404
+// @Failure 500
+// @Router /dummies/{id} [get]
 func (s *Server) handleDummyGet() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		id := c.Param("id")
@@ -53,10 +75,22 @@ func (s *Server) handleDummyGet() gin.HandlerFunc {
 			return
 		}
 
-		c.JSON(http.StatusOK, makeData(*dummy))
+		c.JSON(http.StatusOK, *dummy)
 	}
 }
 
+// handleDummyUpdate godoc
+// @Summary Updates an existing dummy.
+// @Tags Dummy
+// @Description Updates an existing dummy.
+// @Param id path string true "Dummy ID"
+// @Param data body services.DummyDto true "Request body"
+// @Accept json
+// @Produce json
+// @Success 200 {object} services.Dummy
+// @Failure 400
+// @Failure 500
+// @Router /dummies/{id} [post]
 func (s *Server) handleDummyUpdate() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		var dto services.DummyDto
@@ -74,10 +108,19 @@ func (s *Server) handleDummyUpdate() gin.HandlerFunc {
 			return
 		}
 
-		c.JSON(http.StatusOK, makeData(*updatedDummy))
+		c.JSON(http.StatusOK, *updatedDummy)
 	}
 }
 
+// handleDummyDelete godoc
+// @Summary Deletes an existing dummy.
+// @Tags Dummy
+// @Description Deletes an existing dummy.
+// @Param id path string true "Dummy ID"
+// @Accept json
+// @Success 204
+// @Failure 500
+// @Router /dummies/{id} [delete]
 func (s *Server) handleDummyDelete() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		id := c.Param("id")
@@ -88,6 +131,6 @@ func (s *Server) handleDummyDelete() gin.HandlerFunc {
 			return
 		}
 
-		c.JSON(http.StatusNoContent, makeData("Deleted"))
+		c.JSON(http.StatusNoContent, "Dummy successfully deleted")
 	}
 }
