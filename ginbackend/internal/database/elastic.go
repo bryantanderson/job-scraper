@@ -2,6 +2,10 @@ package database
 
 import (
 	"context"
+	"strings"
+	"time"
+
+	"github.com/bryantanderson/go-job-assessor/internal/setup"
 	"github.com/elastic/go-elasticsearch/v8"
 	documentDelete "github.com/elastic/go-elasticsearch/v8/typedapi/core/delete"
 	"github.com/elastic/go-elasticsearch/v8/typedapi/core/get"
@@ -10,9 +14,6 @@ import (
 	"github.com/elastic/go-elasticsearch/v8/typedapi/indices/create"
 	indexDelete "github.com/elastic/go-elasticsearch/v8/typedapi/indices/delete"
 	log "github.com/sirupsen/logrus"
-	"sincidium/linkd/api/setup"
-	"strings"
-	"time"
 )
 
 type DocumentDto struct {
@@ -24,7 +25,7 @@ type ElasticDatabase struct {
 	client *elasticsearch.TypedClient
 }
 
-func InitElasticSearch(settings *setup.ApplicationSettings) *ElasticDatabase {
+func InitializeElasticSearch(settings *setup.ApplicationSettings) *ElasticDatabase {
 	elasticClient, err := elasticsearch.NewTypedClient(
 		elasticsearch.Config{
 			CloudID: settings.ElasticCloudId,
@@ -96,4 +97,3 @@ func (s *ElasticDatabase) DeleteDocument(ctx context.Context, indexName, id stri
 	res, err := s.client.Delete(indexName, id).Do(ctx)
 	return res, err
 }
-

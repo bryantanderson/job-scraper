@@ -1,7 +1,7 @@
 package database
 
 import (
-	"sincidium/linkd/api/services"
+	"github.com/bryantanderson/go-job-assessor/internal/services"
 
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/mongo"

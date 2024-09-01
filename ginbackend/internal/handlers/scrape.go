@@ -3,7 +3,8 @@ package handlers
 import (
 	"errors"
 	"net/http"
-	"sincidium/linkd/api/services"
+
+	"github.com/bryantanderson/go-job-assessor/internal/services"
 
 	"github.com/gin-gonic/gin"
 )
@@ -17,7 +18,7 @@ func (s *Server) registerScrapeRoutes() {
 }
 
 // handleSeekScrape godoc
-// @Summary Scrapes a seek job page 
+// @Summary Scrapes a seek job page
 // @Tags Scrape
 // @Description Scrapes a seek job page for Software Engineering Jobs. Accepts a "candidate" and ranks the candidate against the job postings.
 // @Param data body services.ScrapeSeekPayload true "Request body"
@@ -54,14 +55,14 @@ func (s *Server) handleSeekScrape() gin.HandlerFunc {
 func (s *Server) handleSeekScrapeGet() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		userId := c.Param("user")
-		
+
 		if userId == "" {
 			handleBadRequest(c, errors.New("Invalid user"))
 			return
 		}
 
 		assessments := s.ScraperService.GetScrapedSeekAssessments(userId)
-		
+
 		if assessments == nil {
 			handleInternalError(c, errors.New("Internal server error"))
 			return

@@ -2,7 +2,8 @@ package database
 
 import (
 	"context"
-	"sincidium/linkd/api/setup"
+
+	"github.com/bryantanderson/go-job-assessor/internal/setup"
 
 	log "github.com/sirupsen/logrus"
 
@@ -20,7 +21,7 @@ type Database struct {
 	databaseName string
 }
 
-func InitDB(settings *setup.ApplicationSettings) *Database {
+func InitializeDatabase(settings *setup.ApplicationSettings) *Database {
 	db := &Database{}
 	db.dsn = settings.DatabaseUri
 	db.databaseName = "Linkd"

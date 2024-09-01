@@ -5,11 +5,10 @@ import (
 	"encoding/json"
 	"fmt"
 	"math"
-	"sincidium/linkd/api/setup"
 	"sync"
 	"time"
 
-	"github.com/instructor-ai/instructor-go/pkg/instructor"
+	"github.com/bryantanderson/go-job-assessor/internal/setup"
 	log "github.com/sirupsen/logrus"
 )
 
@@ -50,7 +49,7 @@ type AssessPayload struct {
 type CandidateAssessment struct {
 	mu         sync.Mutex
 	Assessment Assessment
-	client     *instructor.InstructorOpenAI
+	client     *setup.OpenAI
 }
 
 type Assessment struct {
@@ -103,23 +102,18 @@ type AssessorService struct {
 	inTopic             string
 	inTopicSubscription string
 	outTopic            string
+	client              *setup.OpenAI
+	eventService        EventService
 	store               AssessorStore
-	client              *instructor.InstructorOpenAI
-	eventService        *EventService
 }
 
-func InitializeAssessorService(
-	s *setup.ApplicationSettings,
-	c *instructor.InstructorOpenAI,
-	e *EventService,
-	as AssessorStore,
-) *AssessorService {
+func InitializeAssessorService(inTopic, outTopic string, c *setup.OpenAI, e EventService, s AssessorStore) *AssessorService {
 	service := &AssessorService{
-		inTopic:             s.AssessmentTasksTopic,
-		inTopicSubscription: topicNameToSubscriptionName(s.AssessmentTasksTopic),
-		outTopic:            s.AssessmentResultsTopic,
+		inTopic:             inTopic,
+		inTopicSubscription: topicNameToSubscriptionName(inTopic),
+		outTopic:            outTopic,
 		client:              c,
-		store:               as,
+		store:               s,
 		eventService:        e,
 	}
 	service.registerSubscribers()
@@ -260,16 +254,14 @@ func (a *AssessorService) createCriteria(job *Job) (*Rubric, error) {
 	`,
 		responsibilities)
 
-	ctx, cancel := context.WithTimeout(context.Background(), time.Second*10)
-	defer cancel()
-
 	var rubricInstruct rubricInstruct
-	resp, err := a.client.CreateChatCompletion(
-		ctx,
-		makeChatCompletionRequest(prompt, 500),
-		&rubricInstruct,
-	)
-	_ = resp
+	err = a.client.Message(prompt, 500, &rubricInstruct)
+	
+	if err != nil {
+		log.Errorf("Failed to generate criteria %s\n", err.Error())
+		return nil, err
+	}
+
 	rubric := Rubric{
 		Id:     a.jobIdToRubricId(job.Id),
 		Points: rubricInstruct.Points,
@@ -286,14 +278,12 @@ func (a *AssessorService) jobIdToRubricId(jobId string) string {
 }
 
 /*
+ *
+ * Candidate Assessment receivers from this point onward.
+ *
+ */
 
-Candidate Assessment receivers from this point onward.
-
-*/
-
-func (ca *CandidateAssessment) assessRequirements(
-	ctx context.Context, payload *AssessPayload, wg *sync.WaitGroup, errChan chan<- error,
-) {
+func (ca *CandidateAssessment) assessRequirements(ctx context.Context, payload *AssessPayload, wg *sync.WaitGroup, errChan chan<- error) {
 	log.Infoln("Beginning assessRequirements")
 	defer wg.Done()
 	educations, err := convertToJson(payload.Candidate.Education)
@@ -333,12 +323,7 @@ func (ca *CandidateAssessment) assessRequirements(
 		log.Errorln("Context canceled, aborting assessRequirements")
 		return
 	default:
-		resp, err := ca.client.CreateChatCompletion(
-			ctx,
-			makeChatCompletionRequest(prompt, 300),
-			&p,
-		)
-		_ = resp // sends back original response so no information loss from original API
+		err = ca.client.Message(prompt, 300, &p)
 
 		if err != nil {
 			log.Errorf("assessRequirements OpenAI call has failed with error %v\n", err)
@@ -353,9 +338,7 @@ func (ca *CandidateAssessment) assessRequirements(
 	log.Infoln("Ending assessRequirements")
 }
 
-func (ca *CandidateAssessment) assessCompatibility(
-	ctx context.Context, payload *AssessPayload, wg *sync.WaitGroup, errChan chan<- error,
-) {
+func (ca *CandidateAssessment) assessCompatibility(ctx context.Context, payload *AssessPayload, wg *sync.WaitGroup, errChan chan<- error) {
 	log.Infoln("Beginning assessCompatibility")
 	defer wg.Done()
 	description, err := convertToJson(payload.Job.Description)
@@ -384,12 +367,7 @@ func (ca *CandidateAssessment) assessCompatibility(
 		log.Errorln("Context canceled, aborting assessCompatibility")
 		return
 	default:
-		resp, err := ca.client.CreateChatCompletion(
-			ctx,
-			makeChatCompletionRequest(prompt, 500),
-			&p,
-		)
-		_ = resp // sends back original response so no information loss from original API
+		err = ca.client.Message(prompt, 500, &p)
 
 		if err != nil {
 			log.Errorf("assessCompatibility OpenAI call has failed with error %v\n", err)
@@ -404,9 +382,7 @@ func (ca *CandidateAssessment) assessCompatibility(
 	log.Infoln("Ending assessCompatibility")
 }
 
-func (ca *CandidateAssessment) assessLocation(
-	ctx context.Context, payload *AssessPayload, wg *sync.WaitGroup, errChan chan<- error,
-) {
+func (ca *CandidateAssessment) assessLocation(ctx context.Context, payload *AssessPayload, wg *sync.WaitGroup, errChan chan<- error) {
 	log.Infoln("Beginning assessLocation")
 	defer wg.Done()
 	if payload.Job.Location == "" {
@@ -435,12 +411,7 @@ func (ca *CandidateAssessment) assessLocation(
 		log.Errorln("Context canceled, aborting assessLocation")
 		return
 	default:
-		resp, err := ca.client.CreateChatCompletion(
-			ctx,
-			makeChatCompletionRequest(prompt, 10),
-			&m,
-		)
-		_ = resp
+		err := ca.client.Message(prompt, 10, &m)
 
 		if err != nil {
 			log.Errorf("assessLocation OpenAI call has failed with error %v\n", err)
@@ -464,9 +435,7 @@ func (ca *CandidateAssessment) assignLocationMatch(isMatch bool) {
 	ca.mu.Unlock()
 }
 
-func (ca *CandidateAssessment) assessResponsibilities(
-	ctx context.Context, candidate *Candidate, rubric *Rubric, wg *sync.WaitGroup, errChan chan<- error,
-) {
+func (ca *CandidateAssessment) assessResponsibilities(ctx context.Context, candidate *Candidate, rubric *Rubric, wg *sync.WaitGroup, errChan chan<- error) {
 	log.Infoln("Beginning assessResponsibilities")
 	defer wg.Done()
 	rubricJson, err := convertToJson(rubric)
@@ -501,12 +470,7 @@ func (ca *CandidateAssessment) assessResponsibilities(
 		log.Errorln("Context canceled, aborting assessResponsibilities")
 		return
 	default:
-		resp, err := ca.client.CreateChatCompletion(
-			ctx,
-			makeChatCompletionRequest(prompt, 500),
-			&s,
-		)
-		_ = resp
+		err := ca.client.Message(prompt, 500, &s)
 
 		if err != nil {
 			log.Errorf("assessResponsibilities OpenAI call has failed with error %v\n", err)
@@ -521,9 +485,7 @@ func (ca *CandidateAssessment) assessResponsibilities(
 	log.Infoln("Ending assessResponsibilities")
 }
 
-func (ca *CandidateAssessment) assessSkills(
-	ctx context.Context, candidate *Candidate, rubric *Rubric, wg *sync.WaitGroup, errChan chan<- error,
-) {
+func (ca *CandidateAssessment) assessSkills(ctx context.Context, candidate *Candidate, rubric *Rubric, wg *sync.WaitGroup, errChan chan<- error) {
 	log.Infoln("Beginning assessSkills")
 	defer wg.Done()
 	rubricJson, err := convertToJson(rubric)
@@ -557,12 +519,7 @@ func (ca *CandidateAssessment) assessSkills(
 		log.Errorln("Context canceled, aborting assessSkills")
 		return
 	default:
-		resp, err := ca.client.CreateChatCompletion(
-			ctx,
-			makeChatCompletionRequest(prompt, 500),
-			&s,
-		)
-		_ = resp
+		err := ca.client.Message(prompt, 500, &s)
 
 		if err != nil {
 			log.Errorf("assessSkills OpenAI call has failed with error %v\n", err)
@@ -576,9 +533,7 @@ func (ca *CandidateAssessment) assessSkills(
 	ca.mu.Unlock()
 }
 
-func (ca *CandidateAssessment) assessExperience(
-	payload *AssessPayload, wg *sync.WaitGroup,
-) {
+func (ca *CandidateAssessment) assessExperience(payload *AssessPayload, wg *sync.WaitGroup) {
 	log.Infoln("Beginning assessExperience")
 	defer wg.Done()
 	candidate_yoe := 0

@@ -4,23 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"strings"
-
-	openai "github.com/sashabaranov/go-openai"
 )
-
-func makeChatCompletionRequest(prompt string, maxTokens int) openai.ChatCompletionRequest {
-	return openai.ChatCompletionRequest{
-		Model: openai.GPT4o,
-		Messages: []openai.ChatCompletionMessage{
-			{
-				Role:    openai.ChatMessageRoleSystem,
-				Content: prompt,
-			},
-		},
-		MaxTokens:   maxTokens,
-		Temperature: 0.0,
-	}
-}
 
 func checkFatalError(err error) {
 	if err != nil {

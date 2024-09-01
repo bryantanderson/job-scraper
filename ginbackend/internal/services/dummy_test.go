@@ -2,8 +2,9 @@ package services_test
 
 import (
 	"errors"
-	"sincidium/linkd/api/services"
 	"testing"
+
+	"github.com/bryantanderson/go-job-assessor/internal/services"
 
 	"github.com/gin-gonic/gin"
 	"github.com/stretchr/testify/assert"

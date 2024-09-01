@@ -4,8 +4,9 @@ import (
 	"context"
 	"sync"
 
-	"sincidium/linkd/api/setup"
 	"time"
+
+	"github.com/bryantanderson/go-job-assessor/internal/setup"
 
 	"github.com/Azure/azure-sdk-for-go/sdk/messaging/azservicebus"
 
@@ -18,7 +19,13 @@ type Event struct {
 	contentType string
 }
 
-type EventService struct {
+type EventService interface {
+	Publish(event *Event)
+	Subscribe(topic, subscriber string, mChan chan []byte)
+	Register(callback func())
+}
+
+type EventServiceImpl struct {
 	mu            sync.Mutex
 	client        *azservicebus.Client
 	producerMap   map[string]*azservicebus.Sender
@@ -26,7 +33,7 @@ type EventService struct {
 	registered    []func()
 }
 
-func InitializeEventService(appSettings *setup.ApplicationSettings) *EventService {
+func InitializeEventServiceImpl(appSettings *setup.ApplicationSettings) *EventServiceImpl {
 	producerMap := make(map[string]*azservicebus.Sender)
 	subscriberMap := make(map[string]*azservicebus.Receiver)
 	client, err := azservicebus.NewClientFromConnectionString(appSettings.ServiceBusConnectionString, nil)
@@ -45,24 +52,45 @@ func InitializeEventService(appSettings *setup.ApplicationSettings) *EventServic
 
 	checkFatalError(err)
 
-	return &EventService{
+	return &EventServiceImpl{
 		client:        client,
 		producerMap:   producerMap,
 		subscriberMap: subscriberMap,
 	}
 }
 
-func (s *EventService) Register(callback func()) {
+func (s *EventServiceImpl) Register(callback func()) {
 	s.registered = append(s.registered, callback)
 }
 
-func (s *EventService) Start() {
+func (s *EventServiceImpl) Start() {
 	for _, r := range s.registered {
 		go r()
 	}
 }
 
-func (s *EventService) Subscribe(topic, subscriber string, mChan chan []byte) {
+func (s *EventServiceImpl) Publish(event *Event) {
+	producer, ok := s.producerMap[event.topic]
+	if !ok {
+		log.Errorf("Producer does not exist for topic %s\n", event.topic)
+		return
+	}
+
+	ctx, cancel := context.WithTimeout(context.Background(), time.Second*5)
+	defer cancel()
+
+	message := azservicebus.Message{
+		Body:        []byte(event.body),
+		ContentType: &event.contentType,
+	}
+	err := producer.SendMessage(ctx, &message, nil)
+
+	if err != nil {
+		log.Errorf("Unable to produce message: %s\n", err.Error())
+	}
+}
+
+func (s *EventServiceImpl) Subscribe(topic, subscriber string, mChan chan []byte) {
 	receiver := s.getSubscriber(topic, subscriber)
 	for {
 		messages, err := receiver.ReceiveMessages(context.TODO(), 10, nil)
@@ -88,28 +116,7 @@ func (s *EventService) Subscribe(topic, subscriber string, mChan chan []byte) {
 	}
 }
 
-func (s *EventService) Publish(event *Event) {
-	producer, ok := s.producerMap[event.topic]
-	if !ok {
-		log.Errorf("Producer does not exist for topic %s\n", event.topic)
-		return
-	}
-
-	ctx, cancel := context.WithTimeout(context.Background(), time.Second*5)
-	defer cancel()
-
-	message := azservicebus.Message{
-		Body:        []byte(event.body),
-		ContentType: &event.contentType,
-	}
-	err := producer.SendMessage(ctx, &message, nil)
-
-	if err != nil {
-		log.Errorf("Unable to produce message: %s\n", err.Error())
-	}
-}
-
-func (s *EventService) getSubscriber(topic, subscriber string) *azservicebus.Receiver {
+func (s *EventServiceImpl) getSubscriber(topic, subscriber string) *azservicebus.Receiver {
 	receiver, ok := s.subscriberMap[topic]
 	if ok {
 		return receiver
@@ -117,7 +124,7 @@ func (s *EventService) getSubscriber(topic, subscriber string) *azservicebus.Rec
 	return s.createSubscriber(topic, subscriber)
 }
 
-func (s *EventService) createSubscriber(topic, subscriber string) *azservicebus.Receiver {
+func (s *EventServiceImpl) createSubscriber(topic, subscriber string) *azservicebus.Receiver {
 	receiver, err := s.client.NewReceiverForSubscription(
 		topic, subscriber, nil,
 	)
@@ -130,7 +137,7 @@ func (s *EventService) createSubscriber(topic, subscriber string) *azservicebus.
 	return receiver
 }
 
-func (s *EventService) Close() {
+func (s *EventServiceImpl) Close() {
 	for _, p := range s.producerMap {
 		p.Close(context.TODO())
 	}

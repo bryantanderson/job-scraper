@@ -2,7 +2,8 @@ package database
 
 import (
 	"encoding/json"
-	"sincidium/linkd/api/services"
+
+	"github.com/bryantanderson/go-job-assessor/internal/services"
 
 	"github.com/elastic/go-elasticsearch/v8/typedapi/core/search"
 	"github.com/elastic/go-elasticsearch/v8/typedapi/types"

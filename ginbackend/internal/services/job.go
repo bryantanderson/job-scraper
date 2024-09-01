@@ -1,16 +1,12 @@
 package services
 
 import (
-	"context"
 	"encoding/json"
 	"fmt"
-	"sincidium/linkd/api/setup"
-	"time"
 
+	"github.com/bryantanderson/go-job-assessor/internal/setup"
 	"github.com/google/uuid"
 	log "github.com/sirupsen/logrus"
-
-	"github.com/instructor-ai/instructor-go/pkg/instructor"
 )
 
 const (
@@ -47,21 +43,21 @@ type JobService struct {
 	inTopicSubscription string
 	outTopic            string
 	store               JobStore
-	client              *instructor.InstructorOpenAI
-	eventService        *EventService
+	client              *setup.OpenAI
+	eventService        EventService
 }
 
 func InitializeJobService(
-	s *setup.ApplicationSettings,
-	c *instructor.InstructorOpenAI,
-	e *EventService,
-	js JobStore,
+	inTopic, outTopic string,
+	c *setup.OpenAI,
+	e EventService,
+	s JobStore,
 ) *JobService {
 	srv := &JobService{
-		inTopic:             s.JobTasksTopic,
-		inTopicSubscription: topicNameToSubscriptionName(s.JobTasksTopic),
-		outTopic:            s.JobResultsTopic,
-		store:               js,
+		inTopic:             inTopic,
+		inTopicSubscription: topicNameToSubscriptionName(inTopic),
+		outTopic:            outTopic,
+		store:               s,
 		client:              c,
 		eventService:        e,
 	}
@@ -106,15 +102,7 @@ func (s *JobService) structureJob(description string) {
 	`, description)
 
 	job := Job{}
-	ctx, cancel := context.WithTimeout(context.Background(), time.Second*time.Duration(TIMEOUT))
-	defer cancel()
-
-	resp, err := s.client.CreateChatCompletion(
-		ctx,
-		makeChatCompletionRequest(prompt, len(description)/2),
-		&job,
-	)
-	_ = resp
+	err := s.client.Message(prompt, len(description)/2, &job)
 
 	if err != nil {
 		log.Errorf("Failed to structure job description: %s", err.Error())
@@ -152,15 +140,8 @@ func (s *JobService) CompleteScrapedJob(scrapedJob *ScrapedJob) *Job {
 	`, scrapedJobJson)
 
 	job := &Job{}
-	ctx, cancel := context.WithTimeout(context.Background(), time.Second*time.Duration(TIMEOUT))
-	defer cancel()
-
-	resp, err := s.client.CreateChatCompletion(
-		ctx,
-		makeChatCompletionRequest(prompt, 0),
-		job,
-	)
-	_ = resp
+	
+	err = s.client.Message(prompt, 500, job)
 
 	if err != nil {
 		log.Errorf("Failed to complete scraped job: %s", err.Error())

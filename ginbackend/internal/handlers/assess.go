@@ -3,7 +3,8 @@ package handlers
 import (
 	"net/http"
 	"reflect"
-	"sincidium/linkd/api/services"
+
+	"github.com/bryantanderson/go-job-assessor/internal/services"
 
 	"github.com/gin-gonic/gin"
 	"go.mongodb.org/mongo-driver/mongo"

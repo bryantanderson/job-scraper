@@ -5,13 +5,11 @@ import (
 	"fmt"
 	"net/http"
 	"os"
-	"sincidium/linkd/api/database"
-	_ "sincidium/linkd/api/docs"
-	"sincidium/linkd/api/handlers"
-	"sincidium/linkd/api/setup"
+	"github.com/bryantanderson/go-job-assessor/internal/database"
+	_ "github.com/bryantanderson/go-job-assessor/docs"
+	"github.com/bryantanderson/go-job-assessor/internal/handlers"
+	"github.com/bryantanderson/go-job-assessor/internal/setup"
 	"time"
-	"github.com/instructor-ai/instructor-go/pkg/instructor"
-	"github.com/sashabaranov/go-openai"
 	log "github.com/sirupsen/logrus"
 )
 
@@ -24,22 +22,16 @@ func run(ctx context.Context) {
 	defer server.Close()
 
 	// Connect to MongoDB
-	db := database.InitDB(settings)
+	db := database.InitializeDatabase(settings)
 	db.Open()
 
 	// Connect to OpenAI
-	config := openai.DefaultAzureConfig(settings.AzureOpenAiApiKey, settings.AzureOpenAiEndpoint)
-	openai := openai.NewClientWithConfig(config)
-	client := instructor.FromOpenAI(
-		openai,
-		instructor.WithMode(instructor.ModeJSON),
-		instructor.WithMaxRetries(3),
-	)
+	openai := setup.InitializeOpenAI(settings)
 
 	// Connect to Elastic Search
-	elasticSearch := database.InitElasticSearch(settings)
+	elasticSearch := database.InitializeElasticSearch(settings)
 
-	server.AddRoutes(db, client, elasticSearch)
+	server.AddRoutes(db, openai, elasticSearch)
 
 	httpServer := &http.Server{
 		Addr:         server.Settings.ServerPort,
