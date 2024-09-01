@@ -1,11 +1,12 @@
 package handlers
 
 import (
-	"github.com/gin-gonic/gin"
-	"sincidium/linkd/api/services"
-	"sincidium/linkd/api/setup"
 	"sincidium/linkd/api/database"
 	"sincidium/linkd/api/middleware"
+	"sincidium/linkd/api/services"
+	"sincidium/linkd/api/setup"
+
+	"github.com/gin-gonic/gin"
 
 	"github.com/instructor-ai/instructor-go/pkg/instructor"
 	swaggerfiles "github.com/swaggo/files"
@@ -16,11 +17,11 @@ type Server struct {
 	Router   *gin.Engine
 	Settings *setup.ApplicationSettings
 
-	EventService    *services.EventService
-	DummyService    *services.DummyService
-	JobService      *services.JobService
-	AssessorService *services.AssessorService
-	ScraperService 	*services.ScraperService
+	EventService     *services.EventService
+	DummyService     *services.DummyService
+	JobService       *services.JobService
+	AssessorService  *services.AssessorService
+	ScraperService   *services.ScraperService
 	CandidateService *services.CandidateService
 }
 
@@ -53,26 +54,26 @@ func (s *Server) AddRoutes(
 	s.Router.GET("/swagger/*any", ginSwagger.WrapHandler(swaggerfiles.Handler))
 
 	// Instantiate event service
-	eventService := services.NewEventService(s.Settings)
+	eventService := services.InitializeEventService(s.Settings)
 
 	// Instantiate candidate service
-	candidateStore := database.NewCandidateStore(db)
-	candidateService := services.NewCandidateService(candidateStore)
+	candidateStore := database.InitializeCandidateStore(db)
+	candidateService := services.InitializeCandidateService(candidateStore)
 
 	// Instantiate dummy service
-	dummyStore := database.NewDummyStore(db)
-	dummyService := services.NewDummyService(dummyStore)
+	dummyStore := database.InitializeDummyStore(db)
+	dummyService := services.InitializeDummyService(dummyStore)
 
 	// Instantiate assessor service
-	assessStore := database.NewAssessStore(db, elastic)
-	assessorService := services.NewAssessorService(s.Settings, client, eventService, assessStore)
+	assessStore := database.InitializeAssessStore(db, elastic)
+	assessorService := services.InitializeAssessorService(s.Settings, client, eventService, assessStore)
 
 	// Instantiate job service
-	jobStore := database.NewJobStore(db, elastic)
-	jobService := services.NewJobService(s.Settings, client, eventService, jobStore)
+	jobStore := database.InitializeJobStore(db, elastic)
+	jobService := services.InitializeJobService(s.Settings, client, eventService, jobStore)
 
 	// Instantiate scraper service
-	scraperService := services.NewScraperService(jobService, assessorService)
+	scraperService := services.InitializeScraperService(jobService, assessorService)
 
 	s.EventService = eventService
 	s.DummyService = dummyService

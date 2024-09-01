@@ -37,7 +37,7 @@ type ScraperService struct {
 	assessorService *AssessorService
 }
 
-func NewScraperService(jobService *JobService, assessorService *AssessorService) *ScraperService {
+func InitializeScraperService(jobService *JobService, assessorService *AssessorService) *ScraperService {
 	s := ScraperService{
 		clientMap:       make(map[string]*colly.Collector),
 		jobService:      jobService,
@@ -106,13 +106,12 @@ func (s *ScraperService) ScrapeSeek(payload *ScrapeSeekPayload) []*ScrapedJob {
 	return jobs
 }
 
-
 func (s *ScraperService) GetScrapedSeekAssessments(userId string) []*ScrapedJobAssessment {
 	sja := make([]*ScrapedJobAssessment, 0)
 	queryParams := make(map[string]string)
 	queryParams["id"] = s.assessorService.UserIdToAssessmentId(userId)
 
-	assessments , err := s.assessorService.QueryAssessments(queryParams)
+	assessments, err := s.assessorService.QueryAssessments(queryParams)
 
 	if err != nil {
 		log.Errorf("Failed to fetch assessments: %s\n", err.Error())
@@ -140,16 +139,16 @@ func (s *ScraperService) GetScrapedSeekAssessments(userId string) []*ScrapedJobA
 
 func (s *ScraperService) registerCallbacks(client *colly.Collector) {
 	client.OnRequest(func(r *colly.Request) {
-		log.Infof("Visiting page with URL %s", r.URL.String())
+		log.Infof("Visiting page with URL %s\n", r.URL.String())
 	})
 	client.OnResponse(func(r *colly.Response) {
-		log.Infof("Successfully visited page with URL %s", r.Request.URL.String())
+		log.Infof("Successfully visited page with URL %s\n", r.Request.URL.String())
 	})
 	client.OnScraped(func(r *colly.Response) {
-		log.Infoln("Successfully scraped page with URL %s", r.Request.URL.String())
+		log.Infof("Successfully scraped page with URL %s\n", r.Request.URL.String())
 	})
 	client.OnError(func(_ *colly.Response, err error) {
-		log.Errorf("Error while scraping: %s", err.Error())
+		log.Errorf("Error while scraping: %s\n", err.Error())
 	})
 }
 

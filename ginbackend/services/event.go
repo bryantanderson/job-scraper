@@ -19,14 +19,14 @@ type Event struct {
 }
 
 type EventService struct {
-	mu 			  sync.Mutex
+	mu            sync.Mutex
 	client        *azservicebus.Client
 	producerMap   map[string]*azservicebus.Sender
 	subscriberMap map[string]*azservicebus.Receiver
 	registered    []func()
 }
 
-func NewEventService(appSettings *setup.ApplicationSettings) *EventService {
+func InitializeEventService(appSettings *setup.ApplicationSettings) *EventService {
 	producerMap := make(map[string]*azservicebus.Sender)
 	subscriberMap := make(map[string]*azservicebus.Receiver)
 	client, err := azservicebus.NewClientFromConnectionString(appSettings.ServiceBusConnectionString, nil)

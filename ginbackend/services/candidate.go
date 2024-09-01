@@ -10,7 +10,7 @@ import (
 type CandidateDto struct {
 	Education   []Education  `json:"education"`
 	Experiences []Experience `json:"experiences"`
-	Skills		[]string 	 `json:"skills"`
+	Skills      []string     `json:"skills"`
 	Summary     string       `json:"summary"`
 	Location    string       `json:"location"`
 }
@@ -45,7 +45,7 @@ type Experience struct {
 
 type CandidateStore interface {
 	Create(c *Candidate) error
-	Get(id string) (*Candidate, error)
+	FindById(id string) (*Candidate, error)
 	Delete(id string) error
 }
 
@@ -53,7 +53,7 @@ type CandidateService struct {
 	store CandidateStore
 }
 
-func NewCandidateService(store CandidateStore) *CandidateService {
+func InitializeCandidateService(store CandidateStore) *CandidateService {
 	return &CandidateService{
 		store: store,
 	}
@@ -70,12 +70,12 @@ func (s *CandidateService) CreateCandidate(dto *CandidateDto) (*Candidate, error
 	}
 
 	candidate := Candidate{
-		Id: uuid.NewString(),
-		Education: dto.Education,
+		Id:          uuid.NewString(),
+		Education:   dto.Education,
 		Experiences: dto.Experiences,
-		Skills: skills,
-		Summary: dto.Summary,
-		Location: dto.Location,
+		Skills:      skills,
+		Summary:     dto.Summary,
+		Location:    dto.Location,
 	}
 	err := s.store.Create(&candidate)
 
@@ -88,7 +88,7 @@ func (s *CandidateService) CreateCandidate(dto *CandidateDto) (*Candidate, error
 }
 
 func (s *CandidateService) GetCandidate(id string) (*Candidate, error) {
-	candidate, err := s.store.Get(id)
+	candidate, err := s.store.FindById(id)
 
 	if err != nil {
 		log.Errorf("Failed to get candidate: %s\n", err.Error())

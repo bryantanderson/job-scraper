@@ -51,7 +51,7 @@ type JobService struct {
 	eventService        *EventService
 }
 
-func NewJobService(
+func InitializeJobService(
 	s *setup.ApplicationSettings,
 	c *instructor.InstructorOpenAI,
 	e *EventService,

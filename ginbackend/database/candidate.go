@@ -13,9 +13,9 @@ type CandidateStore struct {
 	collectionName string
 }
 
-func NewCandidateStore(db *Database) *CandidateStore {
+func InitializeCandidateStore(db *Database) *CandidateStore {
 	return &CandidateStore{
-		db: db,
+		db:             db,
 		collectionName: "candidates",
 	}
 }
@@ -29,7 +29,7 @@ func (s *CandidateStore) Create(c *services.Candidate) error {
 	return nil
 }
 
-func (s *CandidateStore) Get(id string) (*services.Candidate, error) {
+func (s *CandidateStore) FindById(id string) (*services.Candidate, error) {
 	var candidate services.Candidate
 	err := s.getCollection().FindOne(s.db.ctx, bson.M{"_id": id}).Decode(&candidate)
 	if err != nil {

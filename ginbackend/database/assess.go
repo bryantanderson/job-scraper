@@ -18,7 +18,7 @@ type AssessStore struct {
 	criteriaCollectionName string
 }
 
-func NewAssessStore(db *Database, elastic *ElasticDatabase) *AssessStore {
+func InitializeAssessStore(db *Database, elastic *ElasticDatabase) *AssessStore {
 	return &AssessStore{
 		db:                     db,
 		elastic:                elastic,

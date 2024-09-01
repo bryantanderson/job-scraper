@@ -31,7 +31,7 @@ func checkFatalError(err error) {
 func handleGoroutineError(err error, errChan chan<- error) {
 	// If the error is caused by a cancel, we do not need to propagate the error back up
 	if strings.Contains(err.Error(), "context canceled") {
-		return 
+		return
 	}
 	errChan <- err
 }

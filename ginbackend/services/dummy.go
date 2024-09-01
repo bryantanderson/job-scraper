@@ -24,7 +24,7 @@ type DummyService struct {
 	store DummyStore
 }
 
-func NewDummyService(store DummyStore) *DummyService {
+func InitializeDummyService(store DummyStore) *DummyService {
 	return &DummyService{
 		store: store,
 	}

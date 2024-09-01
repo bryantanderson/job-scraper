@@ -2,7 +2,6 @@ package services_test
 
 import (
 	"errors"
-	"net/http/httptest"
 	"sincidium/linkd/api/services"
 	"testing"
 
@@ -16,7 +15,7 @@ type FakeDummyStore struct {
 	dummies map[string]*services.Dummy
 }
 
-func NewFakeDummyStore() *FakeDummyStore {
+func InitializeFakeDummyStore() *FakeDummyStore {
 	return &FakeDummyStore{
 		dummies: make(map[string]*services.Dummy),
 	}
@@ -24,7 +23,7 @@ func NewFakeDummyStore() *FakeDummyStore {
 
 func (s *FakeDummyStore) Create(dummy *services.Dummy) error {
 	if _, ok := s.dummies[dummy.Id]; ok {
-		return errors.New("dummy already exists")
+		return errors.New("Dummy already exists")
 	}
 	s.dummies[dummy.Id] = dummy
 	return nil
@@ -53,17 +52,11 @@ func (s *FakeDummyStore) DeleteById(id string) error {
 	return errors.New("Dummy not found")
 }
 
-func getTestContext() *gin.Context {
-	w := httptest.NewRecorder()
-	ctx, _ := gin.CreateTestContext(w)
-	return ctx
-}
-
 func TestCreateAndGetDummy(t *testing.T) {
 	gin.SetMode(gin.TestMode)
 
-	fakeStore := NewFakeDummyStore()
-	sut := services.NewDummyService(fakeStore)
+	fakeStore := InitializeFakeDummyStore()
+	sut := services.InitializeDummyService(fakeStore)
 
 	dto := &services.DummyDto{Name: "Test"}
 
@@ -85,8 +78,8 @@ func TestCreateAndGetDummy(t *testing.T) {
 func TestUpdateDummy(t *testing.T) {
 	gin.SetMode(gin.TestMode)
 
-	fakeStore := NewFakeDummyStore()
-	sut := services.NewDummyService(fakeStore)
+	fakeStore := InitializeFakeDummyStore()
+	sut := services.InitializeDummyService(fakeStore)
 
 	dto := &services.DummyDto{Name: "Test"}
 
@@ -106,8 +99,8 @@ func TestUpdateDummy(t *testing.T) {
 func TestDeleteDummy(t *testing.T) {
 	gin.SetMode(gin.TestMode)
 
-	fakeStore := NewFakeDummyStore()
-	sut := services.NewDummyService(fakeStore)
+	fakeStore := InitializeFakeDummyStore()
+	sut := services.InitializeDummyService(fakeStore)
 
 	dto := &services.DummyDto{Name: "Test"}
 

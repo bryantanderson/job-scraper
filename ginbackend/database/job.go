@@ -16,7 +16,7 @@ type JobStore struct {
 	collectionName string
 }
 
-func NewJobStore(db *Database, elastic *ElasticDatabase) *JobStore {
+func InitializeJobStore(db *Database, elastic *ElasticDatabase) *JobStore {
 	return &JobStore{
 		db:             db,
 		elastic:        elastic,
@@ -31,7 +31,7 @@ func (s *JobStore) Create(j *services.Job) error {
 		log.Errorln(err)
 		return err
 	}
-	
+
 	j.ElasticId = elasticRes.Id_
 	_, err = s.getCollection().InsertOne(s.db.ctx, j)
 	return err

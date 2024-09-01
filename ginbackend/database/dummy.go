@@ -13,7 +13,7 @@ type DummyStore struct {
 	databaseName   string
 }
 
-func NewDummyStore(db *Database) *DummyStore {
+func InitializeDummyStore(db *Database) *DummyStore {
 	return &DummyStore{
 		db:             db,
 		databaseName:   "Linkd",

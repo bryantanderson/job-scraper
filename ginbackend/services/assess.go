@@ -108,7 +108,7 @@ type AssessorService struct {
 	eventService        *EventService
 }
 
-func NewAssessorService(
+func InitializeAssessorService(
 	s *setup.ApplicationSettings,
 	c *instructor.InstructorOpenAI,
 	e *EventService,
@@ -249,7 +249,7 @@ func (a *AssessorService) createCriteria(job *Job) (*Rubric, error) {
 	if err == nil && existingRubric != nil {
 		return existingRubric, nil
 	}
-	
+
 	responsibilities, _ := convertToJson(job.Responsibilities)
 	prompt := fmt.Sprintf(`
 	Given the job description, use the job responsibilities as a criteria to craft a criteria that a candidate can be assessed against.
@@ -285,7 +285,7 @@ func (a *AssessorService) jobIdToRubricId(jobId string) string {
 	return fmt.Sprintf("%s_criteria", jobId)
 }
 
-/* 
+/*
 
 Candidate Assessment receivers from this point onward.
 
