@@ -4,7 +4,6 @@ import (
 	"encoding/json"
 	"fmt"
 
-	"github.com/bryantanderson/go-job-assessor/internal/setup"
 	"github.com/google/uuid"
 	log "github.com/sirupsen/logrus"
 )
@@ -43,13 +42,13 @@ type JobService struct {
 	inTopicSubscription string
 	outTopic            string
 	store               JobStore
-	client              *setup.OpenAI
+	client              LlmService
 	eventService        EventService
 }
 
 func InitializeJobService(
 	inTopic, outTopic string,
-	c *setup.OpenAI,
+	c LlmService,
 	e EventService,
 	s JobStore,
 ) *JobService {

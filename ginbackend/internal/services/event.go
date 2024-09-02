@@ -13,16 +13,16 @@ import (
 	log "github.com/sirupsen/logrus"
 )
 
-type Event struct {
-	topic       string
-	body        string
-	contentType string
-}
-
 type EventService interface {
 	Publish(event *Event)
 	Subscribe(topic, subscriber string, mChan chan []byte)
 	Register(callback func())
+}
+
+type Event struct {
+	topic       string
+	body        string
+	contentType string
 }
 
 type EventServiceImpl struct {

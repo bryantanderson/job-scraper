@@ -12,6 +12,7 @@ require (
 	github.com/instructor-ai/instructor-go v0.0.0-20240813125220-6c2e9b938455
 	github.com/joho/godotenv v1.5.1
 	github.com/prometheus/client_golang v1.20.1
+	github.com/resend/resend-go/v2 v2.11.0
 	github.com/sashabaranov/go-openai v1.28.1
 	github.com/sirupsen/logrus v1.9.3
 	github.com/stretchr/testify v1.9.0

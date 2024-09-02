@@ -1,4 +1,4 @@
-package setup
+package services
 
 import (
 	"context"
@@ -8,28 +8,32 @@ import (
 	"github.com/sashabaranov/go-openai"
 )
 
-type OpenAI struct {
+type LlmService interface {
+	Message(prompt string, maxTokens int, resType any) error
+}
+
+type Llm struct {
 	instructor *instructor.InstructorOpenAI
 }
 
-func InitializeOpenAI(settings *ApplicationSettings) *OpenAI {
-	config := openai.DefaultAzureConfig(settings.AzureOpenAiApiKey, settings.AzureOpenAiEndpoint)
+func InitializeLlmService(apiKey, endpoint string) *Llm {
+	config := openai.DefaultAzureConfig(apiKey, endpoint)
 	openai := openai.NewClientWithConfig(config)
 	instructorClient := instructor.FromOpenAI(
 		openai,
 		instructor.WithMode(instructor.ModeJSON),
 		instructor.WithMaxRetries(3),
 	)
-	return &OpenAI{
+	return &Llm{
 		instructor: instructorClient,
 	}
 }
 
-func (o *OpenAI) Message(prompt string, maxTokens int, resType any) error {
+func (l *Llm) Message(prompt string, maxTokens int, resType any) error {
 	ctx, cancel := context.WithTimeout(context.Background(), time.Second * 10)
 	defer cancel()
 
-	resp, err := o.instructor.CreateChatCompletion(
+	resp, err := l.instructor.CreateChatCompletion(
 		ctx,
 		makeChatCompletionRequest(prompt, maxTokens),
 		resType,

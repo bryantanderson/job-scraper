@@ -8,7 +8,6 @@ import (
 	"sync"
 	"time"
 
-	"github.com/bryantanderson/go-job-assessor/internal/setup"
 	log "github.com/sirupsen/logrus"
 )
 
@@ -49,7 +48,7 @@ type AssessPayload struct {
 type CandidateAssessment struct {
 	mu         sync.Mutex
 	Assessment Assessment
-	client     *setup.OpenAI
+	client     LlmService
 }
 
 type Assessment struct {
@@ -89,6 +88,12 @@ type match struct {
 	IsMatch bool `json:"isMatch" jsonschema:"description=Whether or not the candidate matches the desired location."`
 }
 
+/*
+ *
+ * Interfaces
+ *
+ */
+
 type AssessorStore interface {
 	Create(a *Assessment) error
 	CreateInternalJobCriteria(jc *Rubric) error
@@ -102,12 +107,12 @@ type AssessorService struct {
 	inTopic             string
 	inTopicSubscription string
 	outTopic            string
-	client              *setup.OpenAI
+	client              LlmService
 	eventService        EventService
 	store               AssessorStore
 }
 
-func InitializeAssessorService(inTopic, outTopic string, c *setup.OpenAI, e EventService, s AssessorStore) *AssessorService {
+func InitializeAssessorService(inTopic, outTopic string, c LlmService, e EventService, s AssessorStore) *AssessorService {
 	service := &AssessorService{
 		inTopic:             inTopic,
 		inTopicSubscription: topicNameToSubscriptionName(inTopic),
@@ -256,7 +261,7 @@ func (a *AssessorService) createCriteria(job *Job) (*Rubric, error) {
 
 	var rubricInstruct rubricInstruct
 	err = a.client.Message(prompt, 500, &rubricInstruct)
-	
+
 	if err != nil {
 		log.Errorf("Failed to generate criteria %s\n", err.Error())
 		return nil, err

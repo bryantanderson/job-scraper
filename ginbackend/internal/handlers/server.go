@@ -34,7 +34,7 @@ func NewServer(settings *setup.ApplicationSettings) *Server {
 
 func (s *Server) AddRoutes(
 	db *database.Database,
-	client *setup.OpenAI,
+	client *services.Llm,
 	elastic *database.ElasticDatabase,
 ) {
 	// Define middleware

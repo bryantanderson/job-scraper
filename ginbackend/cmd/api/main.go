@@ -5,11 +5,13 @@ import (
 	"fmt"
 	"net/http"
 	"os"
-	"github.com/bryantanderson/go-job-assessor/internal/database"
-	_ "github.com/bryantanderson/go-job-assessor/docs"
-	"github.com/bryantanderson/go-job-assessor/internal/handlers"
-	"github.com/bryantanderson/go-job-assessor/internal/setup"
 	"time"
+
+	_ "github.com/bryantanderson/go-job-assessor/docs"
+	"github.com/bryantanderson/go-job-assessor/internal/database"
+	"github.com/bryantanderson/go-job-assessor/internal/handlers"
+	"github.com/bryantanderson/go-job-assessor/internal/services"
+	"github.com/bryantanderson/go-job-assessor/internal/setup"
 	log "github.com/sirupsen/logrus"
 )
 
@@ -26,7 +28,7 @@ func run(ctx context.Context) {
 	db.Open()
 
 	// Connect to OpenAI
-	openai := setup.InitializeOpenAI(settings)
+	openai := services.InitializeLlmService(settings.AzureOpenAiApiKey, settings.AzureOpenAiEndpoint)
 
 	// Connect to Elastic Search
 	elasticSearch := database.InitializeElasticSearch(settings)

@@ -25,6 +25,8 @@ type ApplicationSettings struct {
 	ElasticCloudId string
 	ElasticApiKey  string
 
+	ResendApiKey string
+
 	ServerPort         string
 	ServerReadTimeout  time.Duration
 	ServerWriteTimeout time.Duration
@@ -74,6 +76,8 @@ func ReadApplicationSettings() *ApplicationSettings {
 
 	settings.ElasticCloudId = os.Getenv("ELASTIC_CLOUD_ID")
 	settings.ElasticApiKey = os.Getenv("ELASTIC_API_KEY")
+
+	settings.ResendApiKey = os.Getenv("RESEND_API_KEY")
 
 	return &settings
 }
