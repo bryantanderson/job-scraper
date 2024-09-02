@@ -41,16 +41,16 @@ func (s *AssessStore) Create(a *services.Assessment) error {
 	return err
 }
 
-func (s *AssessStore) CreateInternalJobCriteria(jc *services.Rubric) error {
+func (s *AssessStore) CreateInternalJobCriteria(jc *services.JobCriteria) error {
 	log.Infoln("Creating Linkd job criteria in database")
 	_, err := s.getCollection(s.collectionName).InsertOne(s.db.ctx, jc)
 	return err
 }
 
-func (s *AssessStore) QueryInternalJobCriteria(id string) (*services.Rubric, error) {
-	var rubric services.Rubric
-	err := s.getCollection(s.criteriaCollectionName).FindOne(s.db.ctx, bson.M{"id": id}).Decode(&rubric)
-	return &rubric, err
+func (s *AssessStore) QueryInternalJobCriteria(id string) (*services.JobCriteria, error) {
+	var jobCriteria services.JobCriteria
+	err := s.getCollection(s.criteriaCollectionName).FindOne(s.db.ctx, bson.M{"id": id}).Decode(&jobCriteria)
+	return &jobCriteria, err
 }
 
 func (s *AssessStore) FindById(assessmentId string) (*services.Assessment, error) {

@@ -109,7 +109,7 @@ func (s *ScraperService) ScrapeSeek(payload *ScrapeSeekPayload) []*ScrapedJob {
 func (s *ScraperService) GetScrapedSeekAssessments(userId string) []*ScrapedJobAssessment {
 	sja := make([]*ScrapedJobAssessment, 0)
 	queryParams := make(map[string]string)
-	queryParams["id"] = s.assessorService.UserIdToAssessmentId(userId)
+	queryParams["id"] = UserIdToAssessmentId(userId)
 
 	assessments, err := s.assessorService.QueryAssessments(queryParams)
 

@@ -65,12 +65,12 @@ type Assessment struct {
 	ElasticId           string `json:"elasticId,omitempty" `
 }
 
-type Rubric struct {
+type JobCriteria struct {
 	Id     string   `json:"id" bson:"_id"`
 	Points []string `json:"points" jsonschema:"description=A list of the responsibilities that the job descriptions desires within the ideal candidate"`
 }
 
-type rubricInstruct struct {
+type jobCriteriaInstruct struct {
 	Points []string `json:"points" jsonschema:"description=A list of the responsibilities that the job descriptions desires within the ideal candidate"`
 }
 
@@ -96,9 +96,9 @@ type match struct {
 
 type AssessorStore interface {
 	Create(a *Assessment) error
-	CreateInternalJobCriteria(jc *Rubric) error
-	QueryInternalJobCriteria(id string) (*Rubric, error)
-	FindById(userId string) (*Assessment, error)
+	CreateInternalJobCriteria(jc *JobCriteria) error
+	QueryInternalJobCriteria(id string) (*JobCriteria, error)
+	FindById(assessmentId string) (*Assessment, error)
 	Query(params map[string]string) ([]*Assessment, error)
 	Delete(userId string) error
 }
@@ -163,7 +163,7 @@ func (a *AssessorService) worker(i int, mChan <-chan []byte) {
 func (a *AssessorService) AssessCandidate(payload *AssessPayload) {
 	ca := CandidateAssessment{
 		Assessment: Assessment{
-			Id:    a.UserIdToAssessmentId(payload.UserId),
+			Id:    UserIdToAssessmentId(payload.UserId),
 			JobId: payload.Job.Id,
 		},
 		client: a.client,
@@ -233,7 +233,7 @@ func (a *AssessorService) AssessCandidate(payload *AssessPayload) {
 }
 
 func (a *AssessorService) GetAssessment(userId string) (*Assessment, error) {
-	assessment, err := a.store.FindById(a.UserIdToAssessmentId(userId))
+	assessment, err := a.store.FindById(UserIdToAssessmentId(userId))
 	return assessment, err
 }
 
@@ -241,7 +241,7 @@ func (a *AssessorService) QueryAssessments(params map[string]string) ([]*Assessm
 	return a.store.Query(params)
 }
 
-func (a *AssessorService) createCriteria(job *Job) (*Rubric, error) {
+func (a *AssessorService) createCriteria(job *Job) (*JobCriteria, error) {
 	// Check if a criteria for the job already exists
 	existingRubric, err := a.store.QueryInternalJobCriteria(a.jobIdToRubricId(job.Id))
 
@@ -259,23 +259,19 @@ func (a *AssessorService) createCriteria(job *Job) (*Rubric, error) {
 	`,
 		responsibilities)
 
-	var rubricInstruct rubricInstruct
-	err = a.client.Message(prompt, 500, &rubricInstruct)
+	var jobCriteriaInstruct jobCriteriaInstruct
+	err = a.client.Message(prompt, 500, &jobCriteriaInstruct)
 
 	if err != nil {
 		log.Errorf("Failed to generate criteria %s\n", err.Error())
 		return nil, err
 	}
 
-	rubric := Rubric{
+	jobCriteria := JobCriteria{
 		Id:     a.jobIdToRubricId(job.Id),
-		Points: rubricInstruct.Points,
+		Points: jobCriteriaInstruct.Points,
 	}
-	return &rubric, err
-}
-
-func (a *AssessorService) UserIdToAssessmentId(userId string) string {
-	return fmt.Sprintf("%s_assessment", userId)
+	return &jobCriteria, err
 }
 
 func (a *AssessorService) jobIdToRubricId(jobId string) string {
@@ -440,10 +436,10 @@ func (ca *CandidateAssessment) assignLocationMatch(isMatch bool) {
 	ca.mu.Unlock()
 }
 
-func (ca *CandidateAssessment) assessResponsibilities(ctx context.Context, candidate *Candidate, rubric *Rubric, wg *sync.WaitGroup, errChan chan<- error) {
+func (ca *CandidateAssessment) assessResponsibilities(ctx context.Context, candidate *Candidate, jc *JobCriteria, wg *sync.WaitGroup, errChan chan<- error) {
 	log.Infoln("Beginning assessResponsibilities")
 	defer wg.Done()
-	rubricJson, err := convertToJson(rubric)
+	jcJson, err := convertToJson(jc)
 
 	if err != nil {
 		log.Errorln("Error converting job rubric to JSON:", err)
@@ -466,7 +462,7 @@ func (ca *CandidateAssessment) assessResponsibilities(ctx context.Context, candi
 	candidate Past Experiences (provided in json):
 	%s
 	`,
-		rubricJson, experience)
+	jcJson, experience)
 
 	var s score
 
@@ -490,10 +486,10 @@ func (ca *CandidateAssessment) assessResponsibilities(ctx context.Context, candi
 	log.Infoln("Ending assessResponsibilities")
 }
 
-func (ca *CandidateAssessment) assessSkills(ctx context.Context, candidate *Candidate, rubric *Rubric, wg *sync.WaitGroup, errChan chan<- error) {
+func (ca *CandidateAssessment) assessSkills(ctx context.Context, candidate *Candidate, jc *JobCriteria, wg *sync.WaitGroup, errChan chan<- error) {
 	log.Infoln("Beginning assessSkills")
 	defer wg.Done()
-	rubricJson, err := convertToJson(rubric)
+	jcJson, err := convertToJson(jc)
 
 	if err != nil {
 		log.Errorln("Error converting rubric to JSON:", err)
@@ -515,7 +511,7 @@ func (ca *CandidateAssessment) assessSkills(ctx context.Context, candidate *Cand
 
 	candidate skills (provided in json):
 	%s
-	`, rubricJson, skillsJson)
+	`, jcJson, skillsJson)
 
 	var s score
 

@@ -6,6 +6,10 @@ import (
 	"strings"
 )
 
+func UserIdToAssessmentId(userId string) string {
+	return fmt.Sprintf("%s_assessment", userId)
+}
+
 func checkFatalError(err error) {
 	if err != nil {
 		panic(err)

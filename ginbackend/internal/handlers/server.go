@@ -17,7 +17,6 @@ type Server struct {
 	Settings *setup.ApplicationSettings
 
 	EventService     *services.EventServiceImpl
-	DummyService     *services.DummyService
 	JobService       *services.JobService
 	AssessorService  *services.AssessorService
 	ScraperService   *services.ScraperService
@@ -45,7 +44,6 @@ func (s *Server) AddRoutes(
 	s.registerAssessRoutes()
 	s.registerCandidateRoutes()
 	s.registerHealthRoutes()
-	s.registerDummyRoutes()
 	s.registerScrapeRoutes()
 	s.registerInstrumentRoutes()
 
@@ -58,10 +56,6 @@ func (s *Server) AddRoutes(
 	// Instantiate candidate service
 	candidateStore := database.InitializeCandidateStore(db)
 	candidateService := services.InitializeCandidateService(candidateStore)
-
-	// Instantiate dummy service
-	dummyStore := database.InitializeDummyStore(db)
-	dummyService := services.InitializeDummyService(dummyStore)
 
 	// Instantiate assessor service
 	assessStore := database.InitializeAssessStore(db, elastic)
@@ -87,7 +81,6 @@ func (s *Server) AddRoutes(
 	scraperService := services.InitializeScraperService(jobService, assessorService)
 
 	s.EventService = eventService
-	s.DummyService = dummyService
 	s.JobService = jobService
 	s.CandidateService = candidateService
 	s.AssessorService = assessorService
