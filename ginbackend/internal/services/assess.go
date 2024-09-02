@@ -56,11 +56,11 @@ type Assessment struct {
 	JobId               string `json:"jobId"`
 	Score               uint8  `json:"score"`
 	ExperiencePoint     bool   `json:"experiencePoint"`
-	LocationMatch       match  `json:"locationMatch"`
-	ResponsibilityScore score  `json:"responsibilityScore"`
-	SkillsScore         score  `json:"skillsScore"`
-	RequirementPoint    point  `json:"requirementPoint"`
-	CompatibilityPoint  point  `json:"compatibilityPoint"`
+	LocationMatch       Match  `json:"locationMatch"`
+	ResponsibilityScore Score  `json:"responsibilityScore"`
+	SkillsScore         Score  `json:"skillsScore"`
+	RequirementPoint    Point  `json:"requirementPoint"`
+	CompatibilityPoint  Point  `json:"compatibilityPoint"`
 	CreatedAt           string `json:"createdAt"`
 	ElasticId           string `json:"elasticId,omitempty" `
 }
@@ -74,17 +74,17 @@ type jobCriteriaInstruct struct {
 	Points []string `json:"points" jsonschema:"description=A list of the responsibilities that the job descriptions desires within the ideal candidate"`
 }
 
-type point struct {
+type Point struct {
 	Explanation string `json:"explanation" jsonschema:"description=Provide a detailed explanation as per the given instructions."`
 	IsValid     bool   `json:"isValid" jsonschema:"description=The point you justified in the explanation. Remember this is the feedback that is provided to the HR Manager so have more information in this section."`
 }
 
-type score struct {
+type Score struct {
 	Explanation string `json:"explanation" jsonschema:"description=Assess the user's past job experiences and their skills against the criteria for the job. Carefully evaluate and justify how the candidate meets/does not meet every single criteria."`
 	Score       uint8  `json:"score" jsonschema:"description=Count of the number of criterions the candidate met successfully"`
 }
 
-type match struct {
+type Match struct {
 	IsMatch bool `json:"isMatch" jsonschema:"description=Whether or not the candidate matches the desired location."`
 }
 
@@ -168,11 +168,11 @@ func (a *AssessorService) AssessCandidate(payload *AssessPayload) {
 		},
 		client: a.client,
 	}
+
 	jobCriteria, err := a.createCriteria(&payload.Job)
-	a.store.CreateInternalJobCriteria(jobCriteria)
 
 	if err != nil {
-		log.Errorf("Failed to create criteria for job: %s \n", err.Error())
+		log.Errorf("Failed to generate criteria for job: %s \n", err.Error())
 		return
 	}
 
@@ -271,7 +271,14 @@ func (a *AssessorService) createCriteria(job *Job) (*JobCriteria, error) {
 		Id:     a.jobIdToRubricId(job.Id),
 		Points: jobCriteriaInstruct.Points,
 	}
-	return &jobCriteria, err
+	err = a.store.CreateInternalJobCriteria(&jobCriteria)
+
+	if err != nil {
+		log.Errorf("Failed to save criteria %s\n", err.Error())
+		return nil, err
+	}
+
+	return &jobCriteria, nil
 }
 
 func (a *AssessorService) jobIdToRubricId(jobId string) string {
@@ -317,7 +324,7 @@ func (ca *CandidateAssessment) assessRequirements(ctx context.Context, payload *
 	`,
 		educations, qualifications, pointExplanation)
 
-	var p point
+	var p Point
 
 	select {
 	case <-ctx.Done():
@@ -325,7 +332,6 @@ func (ca *CandidateAssessment) assessRequirements(ctx context.Context, payload *
 		return
 	default:
 		err = ca.client.Message(prompt, 300, &p)
-
 		if err != nil {
 			log.Errorf("assessRequirements OpenAI call has failed with error %v\n", err)
 			handleGoroutineError(err, errChan)
@@ -361,7 +367,7 @@ func (ca *CandidateAssessment) assessCompatibility(ctx context.Context, payload 
 	`,
 		payload.Candidate.Summary, description)
 
-	var p point
+	var p Point
 
 	select {
 	case <-ctx.Done():
@@ -405,7 +411,7 @@ func (ca *CandidateAssessment) assessLocation(ctx context.Context, payload *Asse
 	`,
 		payload.Candidate.Location, payload.Job.Description)
 
-	var m match
+	var m Match
 
 	select {
 	case <-ctx.Done():
@@ -428,7 +434,7 @@ func (ca *CandidateAssessment) assessLocation(ctx context.Context, payload *Asse
 }
 
 func (ca *CandidateAssessment) assignLocationMatch(isMatch bool) {
-	m := match{
+	m := Match{
 		IsMatch: isMatch,
 	}
 	ca.mu.Lock()
@@ -464,7 +470,7 @@ func (ca *CandidateAssessment) assessResponsibilities(ctx context.Context, candi
 	`,
 	jcJson, experience)
 
-	var s score
+	var s Score
 
 	select {
 	case <-ctx.Done():
@@ -513,7 +519,7 @@ func (ca *CandidateAssessment) assessSkills(ctx context.Context, candidate *Cand
 	%s
 	`, jcJson, skillsJson)
 
-	var s score
+	var s Score
 
 	select {
 	case <-ctx.Done():

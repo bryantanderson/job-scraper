@@ -19,7 +19,7 @@ func (s *FakeEventService) Subscribe(topic, subscriber string, mChan chan []byte
 }
 
 func (s *FakeEventService) Register(callback func()) {
-	
+	callback()
 }
 
 
