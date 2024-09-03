@@ -30,7 +30,7 @@ func InitializeLlmService(apiKey, endpoint string) *Llm {
 }
 
 func (l *Llm) Message(prompt string, maxTokens int, resType any) error {
-	ctx, cancel := context.WithTimeout(context.Background(), time.Second * 10)
+	ctx, cancel := context.WithTimeout(context.Background(), time.Second*10)
 	defer cancel()
 
 	resp, err := l.instructor.CreateChatCompletion(
@@ -42,7 +42,6 @@ func (l *Llm) Message(prompt string, maxTokens int, resType any) error {
 
 	return err
 }
-
 
 func makeChatCompletionRequest(prompt string, maxTokens int) openai.ChatCompletionRequest {
 	return openai.ChatCompletionRequest{

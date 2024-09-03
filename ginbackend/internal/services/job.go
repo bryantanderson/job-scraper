@@ -139,7 +139,7 @@ func (s *JobService) CompleteScrapedJob(scrapedJob *ScrapedJob) *Job {
 	`, scrapedJobJson)
 
 	job := &Job{}
-	
+
 	err = s.client.Message(prompt, 500, job)
 
 	if err != nil {

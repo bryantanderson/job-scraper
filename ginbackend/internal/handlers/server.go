@@ -60,10 +60,10 @@ func (s *Server) AddRoutes(
 	// Instantiate assessor service
 	assessStore := database.InitializeAssessStore(db, elastic)
 	assessorService := services.InitializeAssessorService(
-		s.Settings.AssessmentTasksTopic, 
-		s.Settings.AssessmentResultsTopic, 
-		client, 
-		eventService, 
+		s.Settings.AssessmentTasksTopic,
+		s.Settings.AssessmentResultsTopic,
+		client,
+		eventService,
 		assessStore,
 	)
 
@@ -71,9 +71,9 @@ func (s *Server) AddRoutes(
 	jobStore := database.InitializeJobStore(db, elastic)
 	jobService := services.InitializeJobService(
 		s.Settings.JobTasksTopic,
-		s.Settings.JobResultsTopic, 
-		client, 
-		eventService, 
+		s.Settings.JobResultsTopic,
+		client,
+		eventService,
 		jobStore,
 	)
 

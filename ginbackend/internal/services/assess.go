@@ -468,7 +468,7 @@ func (ca *CandidateAssessment) assessResponsibilities(ctx context.Context, candi
 	candidate Past Experiences (provided in json):
 	%s
 	`,
-	jcJson, experience)
+		jcJson, experience)
 
 	var s Score
 
