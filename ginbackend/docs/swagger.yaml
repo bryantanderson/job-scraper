@@ -2,7 +2,7 @@ definitions:
   services.Assessment:
     properties:
       compatibilityPoint:
-        $ref: '#/definitions/services.point'
+        $ref: '#/definitions/services.Point'
       createdAt:
         type: string
       elasticId:
@@ -14,15 +14,15 @@ definitions:
       jobId:
         type: string
       locationMatch:
-        $ref: '#/definitions/services.match'
+        $ref: '#/definitions/services.Match'
       requirementPoint:
-        $ref: '#/definitions/services.point'
+        $ref: '#/definitions/services.Point'
       responsibilityScore:
-        $ref: '#/definitions/services.score'
+        $ref: '#/definitions/services.Score'
       score:
         type: integer
       skillsScore:
-        $ref: '#/definitions/services.score'
+        $ref: '#/definitions/services.Score'
     type: object
   services.Candidate:
     properties:
@@ -62,18 +62,6 @@ definitions:
           type: string
         type: array
       summary:
-        type: string
-    type: object
-  services.Dummy:
-    properties:
-      id:
-        type: string
-      name:
-        type: string
-    type: object
-  services.DummyDto:
-    properties:
-      name:
         type: string
     type: object
   services.Education:
@@ -125,6 +113,18 @@ definitions:
       yearsOfExperience:
         type: integer
     type: object
+  services.Match:
+    properties:
+      isMatch:
+        type: boolean
+    type: object
+  services.Point:
+    properties:
+      explanation:
+        type: string
+      isValid:
+        type: boolean
+    type: object
   services.Qualification:
     properties:
       description:
@@ -135,10 +135,26 @@ definitions:
       description:
         type: string
     type: object
-  services.ScrapeSeekPayload:
+  services.Score:
+    properties:
+      explanation:
+        type: string
+      score:
+        type: integer
+    type: object
+  services.ScrapeIndeedPayload:
+    properties:
+      url:
+        type: string
+    type: object
+  services.ScrapePayload:
     properties:
       candidate:
         $ref: '#/definitions/services.Candidate'
+      shouldAssess:
+        type: boolean
+      url:
+        type: string
       userId:
         type: string
     type: object
@@ -164,25 +180,6 @@ definitions:
     properties:
       description:
         type: string
-    type: object
-  services.match:
-    properties:
-      isMatch:
-        type: boolean
-    type: object
-  services.point:
-    properties:
-      explanation:
-        type: string
-      isValid:
-        type: boolean
-    type: object
-  services.score:
-    properties:
-      explanation:
-        type: string
-      score:
-        type: integer
     type: object
 info:
   contact: {}
@@ -309,105 +306,6 @@ paths:
       summary: Gets a candidate.
       tags:
       - Candidate
-  /dummies/:
-    post:
-      consumes:
-      - application/json
-      description: Creates a dummy.
-      parameters:
-      - description: Request payload
-        in: body
-        name: data
-        required: true
-        schema:
-          $ref: '#/definitions/services.DummyDto'
-      produces:
-      - application/json
-      responses:
-        "201":
-          description: Created
-          schema:
-            $ref: '#/definitions/services.Dummy'
-        "400":
-          description: Bad Request
-        "500":
-          description: Internal Server Error
-      summary: Creates a dummy.
-      tags:
-      - Dummy
-  /dummies/{id}:
-    delete:
-      consumes:
-      - application/json
-      description: Deletes an existing dummy.
-      parameters:
-      - description: Dummy ID
-        in: path
-        name: id
-        required: true
-        type: string
-      responses:
-        "204":
-          description: No Content
-        "500":
-          description: Internal Server Error
-      summary: Deletes an existing dummy.
-      tags:
-      - Dummy
-    get:
-      consumes:
-      - application/json
-      description: Gets a dummy.
-      parameters:
-      - description: Dummy ID
-        in: path
-        name: id
-        required: true
-        type: string
-      produces:
-      - application/json
-      responses:
-        "201":
-          description: Created
-          schema:
-            $ref: '#/definitions/services.Dummy'
-        "404":
-          description: Not Found
-        "500":
-          description: Internal Server Error
-      summary: Gets a dummy.
-      tags:
-      - Dummy
-    post:
-      consumes:
-      - application/json
-      description: Updates an existing dummy.
-      parameters:
-      - description: Dummy ID
-        in: path
-        name: id
-        required: true
-        type: string
-      - description: Request body
-        in: body
-        name: data
-        required: true
-        schema:
-          $ref: '#/definitions/services.DummyDto'
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: OK
-          schema:
-            $ref: '#/definitions/services.Dummy'
-        "400":
-          description: Bad Request
-        "500":
-          description: Internal Server Error
-      summary: Updates an existing dummy.
-      tags:
-      - Dummy
   /health:
     get:
       consumes:
@@ -421,19 +319,46 @@ paths:
       summary: Health check
       tags:
       - Health
-  /scrape/seek:
+  /scrape/indeed:
     post:
       consumes:
       - application/json
-      description: Scrapes a seek job page for Software Engineering Jobs. Accepts
-        a "candidate" and ranks the candidate against the job postings.
+      description: Scrapes an Indeed job page. Accepts a "candidate" and ranks the
+        candidate against the job postings if the flag is selected.
       parameters:
       - description: Request body
         in: body
         name: data
         required: true
         schema:
-          $ref: '#/definitions/services.ScrapeSeekPayload'
+          $ref: '#/definitions/services.ScrapeIndeedPayload'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/services.ScrapedJob'
+            type: array
+        "400":
+          description: Bad Request
+      summary: Scrapes an indeed job page
+      tags:
+      - Scrape
+  /scrape/seek:
+    post:
+      consumes:
+      - application/json
+      description: Scrapes a seek job page. Accepts a "candidate" and ranks the candidate
+        against the job postings if the flag is selected.
+      parameters:
+      - description: Request body
+        in: body
+        name: data
+        required: true
+        schema:
+          $ref: '#/definitions/services.ScrapePayload'
       produces:
       - application/json
       responses:

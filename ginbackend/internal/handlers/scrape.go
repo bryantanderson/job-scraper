@@ -13,6 +13,7 @@ func (s *Server) registerScrapeRoutes() {
 	scrapeGroup := s.Router.Group("/scrape")
 	{
 		scrapeGroup.POST("/seek", s.handleSeekScrape())
+		scrapeGroup.POST("/indeed", s.handleIndeedScrape())
 		scrapeGroup.GET("/seek/:user", s.handleSeekScrapeGet())
 	}
 }
@@ -20,8 +21,8 @@ func (s *Server) registerScrapeRoutes() {
 // handleSeekScrape godoc
 // @Summary Scrapes a seek job page
 // @Tags Scrape
-// @Description Scrapes a seek job page for Software Engineering Jobs. Accepts a "candidate" and ranks the candidate against the job postings.
-// @Param data body services.ScrapeSeekPayload true "Request body"
+// @Description Scrapes a seek job page. Accepts a "candidate" and ranks the candidate against the job postings if the flag is selected.
+// @Param data body services.ScrapePayload true "Request body"
 // @Accept json
 // @Produce json
 // @Success 200 {array} services.ScrapedJob
@@ -29,14 +30,38 @@ func (s *Server) registerScrapeRoutes() {
 // @Router /scrape/seek [post]
 func (s *Server) handleSeekScrape() gin.HandlerFunc {
 	return func(c *gin.Context) {
-		var payload services.ScrapeSeekPayload
+		var payload services.ScrapePayload
 
 		if err := c.ShouldBindJSON(&payload); err != nil {
 			handleBadRequest(c, err)
 			return
 		}
 
-		scrapedJobs := s.ScraperService.ScrapeSeek(&payload)
+		scrapedJobs := s.ScraperService.ScrapeSeekJobPage(&payload)
+		c.JSON(http.StatusOK, scrapedJobs)
+	}
+}
+
+// handleIndeedScrape godoc
+// @Summary Scrapes an indeed job page
+// @Tags Scrape
+// @Description Scrapes an Indeed job page. Accepts a "candidate" and ranks the candidate against the job postings if the flag is selected.
+// @Param data body services.ScrapeIndeedPayload true "Request body"
+// @Accept json
+// @Produce json
+// @Success 200 {array} services.ScrapedJob
+// @Failure 400
+// @Router /scrape/indeed [post]
+func (s *Server) handleIndeedScrape() gin.HandlerFunc {
+	return func(c *gin.Context) {
+		var payload services.ScrapeIndeedPayload
+
+		if err := c.ShouldBindJSON(&payload); err != nil {
+			handleBadRequest(c, err)
+			return
+		}
+
+		scrapedJobs := s.ScraperService.ScrapeIndeedJobPage(&payload)
 		c.JSON(http.StatusOK, scrapedJobs)
 	}
 }
@@ -61,7 +86,7 @@ func (s *Server) handleSeekScrapeGet() gin.HandlerFunc {
 			return
 		}
 
-		assessments := s.ScraperService.GetScrapedSeekAssessments(userId)
+		assessments := s.ScraperService.GetAssessments(userId)
 
 		if assessments == nil {
 			handleInternalError(c, errors.New("Internal server error"))
