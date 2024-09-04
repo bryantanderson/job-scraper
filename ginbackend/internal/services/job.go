@@ -23,6 +23,7 @@ type Responsibility struct {
 type Job struct {
 	Id                string           `json:"id,omitempty" bson:"_id"`
 	Title             string           `json:"title" jsonschema:"description=The position that the job is hiring for"`
+	Company			  string 			`json:"company" jsonschema:"description=The company hiring for the job."`
 	Description       string           `json:"description" jsonschema:"description=Brief summary of what the job is about"`
 	Responsibilities  []Responsibility `json:"responsibilities" jsonschema:"description=Responsibilities of the ideal employee listed out in the job description"`
 	Qualifications    []Qualification  `json:"qualifications" jsonschema:"description=Required qualifications of the ideal employee"`

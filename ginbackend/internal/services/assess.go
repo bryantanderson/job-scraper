@@ -547,7 +547,7 @@ func (ca *CandidateAssessment) assessExperience(payload *AssessPayload, wg *sync
 	for _, experience := range payload.Candidate.Experiences {
 		currentDate := time.Now()
 		endDate := experience.EndDate
-		if experience.IsCurrent || experience.EndDate == nil {
+		if experience.EndDate == nil {
 			endDate = &currentDate
 		}
 		duration := (*endDate).Sub(experience.StartDate)

@@ -1,7 +1,9 @@
 {
+	"java.compile.nullAnalysis.mode": "disabled",
 	"java.configuration.updateBuildConfiguration": "automatic",
-	"editor.formatOnSave": true,
 	"files.autoSaveWhenNoErrors": true,
+	"editor.formatOnSave": true,
 	"editor.codeActionsOnSave": {},
-	"java.compile.nullAnalysis.mode": "disabled"
+	"prettier.configPath": "node/.prettierrc",
+	"prettier.experimentalTernaries": true
 }

@@ -164,7 +164,6 @@ func TestAssessCandidateAndGet(t *testing.T) {
 							Description: "Built Google from scratch",
 							StartDate:   currentDate,
 							EndDate:     nil,
-							IsCurrent:   true,
 						},
 						services.Experience{
 							Title:       "Senior Software Engineer",
@@ -172,7 +171,6 @@ func TestAssessCandidateAndGet(t *testing.T) {
 							Description: "Built NASA from scratch",
 							StartDate:   time.Now().Add(time.Duration(-2400) * time.Hour),
 							EndDate:     &currentDate,
-							IsCurrent:   false,
 						},
 					},
 				},
