@@ -1,43 +1,57 @@
-import http from "http";
+import express from "express";
 import dotenv from "dotenv";
-import { wrapResponse, wrapText } from "./util/util";
-import { HTTP_BAD_REQUEST, HTTP_NOT_FOUND } from "./constants";
-import jobRouter from "./routes/job";
+import { router as jobRouter } from "./routes/job";
+import authMiddleware from "./middleware/auth";
+import { connectToMongoDB } from "./repository/mongo";
+import swaggerJsDoc from "swagger-jsdoc";
+import swaggerUi from "swagger-ui-express";
 
 dotenv.config();
 
-const port = Number(process.env.PORT) || 3000;
-const scheme = process.env.SCHEME || "http";
-const hostname = process.env.HOSTNAME || "0.0.0.0";
-const server = http.createServer(
-    (req: http.IncomingMessage, res: http.ServerResponse) => {
-        // Router
-        if (req.url === undefined || req.method === undefined) {
-            wrapResponse(
-                res,
-                HTTP_BAD_REQUEST,
-                wrapText("Undefined URL or method")
-            );
-            return;
-        }
-        const urlParts: string[] = req.url.split("/");
-        const baseRoute = urlParts.length > 1 ? urlParts[1] : urlParts[0];
+const port: number = Number(process.env.PORT) || 5000;
+const server: express.Express = express();
 
-        switch (baseRoute) {
-            case "jobs":
-                jobRouter.get(req.method)?.apply(this, [req, res]);
-                break;
-            default:
-                wrapResponse(
-                    res,
-                    HTTP_NOT_FOUND,
-                    wrapText("Route does not exist")
-                );
-                return;
-        }
-    }
-);
+const swaggerOptions = {
+    definition: {
+        openapi: "3.1.0",
+        info: {
+            title: "NodeJS + ExpressJS",
+            version: "0.1.0",
+            description: "In progress. To be new main backend",
+            contact: {
+                name: "bciputra",
+                email: "@",
+            },
+        },
+        servers: [
+            {
+                url: `http://localhost:${port}`,
+            },
+        ],
+    },
+    apis: ["./src/routes/*.ts"],
+};
 
-server.listen(port, hostname, () => {
-    console.log(`Node listening on address ${scheme}://${hostname}:${port}`);
-});
+const swaggerSpecs = swaggerJsDoc(swaggerOptions);
+
+connectToMongoDB()
+    .then(() => {
+        // Register middleware
+        server.use(authMiddleware);
+
+        // Register routes
+        server.use(
+            "/docs",
+            swaggerUi.serve,
+            swaggerUi.setup(swaggerSpecs, { explorer: true })
+        );
+        server.use("/jobs", jobRouter);
+
+        server.listen(port, () => {
+            console.log(`Node listening on port ${port}`);
+        });
+    })
+    .catch((error: Error) => {
+        console.error("Database connection failed", error);
+        process.exit();
+    });

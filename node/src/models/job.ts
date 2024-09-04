@@ -6,6 +6,7 @@ export default class Job {
     constructor(
         public id: ObjectId,
         public title: string,
+        public company: string,
         public description: string,
         public responsibilities: Responsibility[],
         public qualifications: Qualification[],

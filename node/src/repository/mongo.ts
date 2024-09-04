@@ -1,10 +1,13 @@
 import * as mongoDB from "mongodb";
-import * as dotenv from "dotenv";
 
-export const collections: { jobs?: mongoDB.Collection } = {};
+export const collections: {
+    jobs?: mongoDB.Collection;
+    users?: mongoDB.Collection;
+    candidates?: mongoDB.Collection;
+} = {};
 
 export async function connectToMongoDB() {
-    dotenv.config();
+    const databaseName: string = process.env.MONGO_DATABASE_NAME || "linkd";
 
     const client: mongoDB.MongoClient = new mongoDB.MongoClient(
         process.env.MONGO_CONNECTION_STRING || ""
@@ -12,13 +15,16 @@ export async function connectToMongoDB() {
 
     await client.connect();
 
-    const db: mongoDB.Db = client.db(
-        process.env.MONGO_DATABASE_NAME || "linkd"
-    );
+    const jobsCollectionName: string =
+        process.env.MONGO_JOBS_COLLECTION_NAME || "jobs";
+    const candidatesCollectionName: string =
+        process.env.MONGO_CANDIDATES_COLLECTION_NAME || "candidates";
+    const usersCollectionName: string =
+        process.env.MONGO_USERS_COLLECTION_NAME || "users";
 
-    const jobsCollection: mongoDB.Collection = db.collection(
-        process.env.MONGO_JOBS_COLLECTION_NAME || "jobs"
-    );
+    const db: mongoDB.Db = client.db(databaseName);
 
-    collections.jobs = jobsCollection;
+    collections.jobs = db.collection(jobsCollectionName);
+    collections.users = db.collection(usersCollectionName);
+    collections.candidates = db.collection(candidatesCollectionName);
 }

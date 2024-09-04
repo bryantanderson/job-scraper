@@ -1,117 +1,312 @@
 import {
-    HTTP_BAD_REQUEST,
     HTTP_CREATED,
     HTTP_INTERNAL_SERVER_ERROR,
+    HTTP_NO_CONTENT,
     HTTP_NOT_FOUND,
+    HTTP_NOT_MODIFIED,
     HTTP_OK,
-} from "../constants";
-import http from "http";
-import {
-    wrapResponse,
-    wrapText,
-    getRequestBody,
-    getRequestPathname,
-} from "../util/util";
-import { ObjectId } from "mongodb";
-import { collections } from "../repository/mongo";
-import Job from "../models/job";
+} from "../util/constants";
+import express, { Request, Response } from "express";
+import JobDto from "../models/jobDto";
+import JobService from "../services/job";
 
-const postJobHandler = async (
-    req: http.IncomingMessage,
-    res: http.ServerResponse
-) => {
+/**
+ * @swagger
+ * components:
+ *   schemas:
+ *     Responsibility:
+ *       type: object
+ *       properties:
+ *         description:
+ *           type: string
+ *           description: The responsibility description
+
+ *     Qualification:
+ *       type: object
+ *       properties:
+ *         description:
+ *           type: string
+ *           description: The qualification description
+ * 
+ *     JobDto:
+ *       type: object
+ *       required:
+ *         - title
+ *         - company
+ *         - description
+ *         - responsibilities
+ *         - qualifications
+ *         - location
+ *         - locationType
+ *       properties:
+ *         title:
+ *           type: string
+ *           description: The title of the job
+ *         company:
+ *           type: string
+ *           description: The company offering the job
+ *         description:
+ *           type: string
+ *           description: A detailed description of the job
+ *         responsibilities:
+ *           type: array
+ *           items:
+ *             type: string
+ *           description: List of responsibilities for the job
+ *         qualifications:
+ *           type: array
+ *           items:
+ *             type: string
+ *           description: List of qualifications for the job
+ *         location:
+ *           type: string
+ *           description: The location of the job
+ *         locationType:
+ *           type: string
+ *           description: The type of location (e.g., remote, onsite)
+ *         yearsOfExperience:
+ *           type: number
+ *           description: Optional years of experience required for the job
+ *
+ *     Job:
+ *       type: object
+ *       required:
+ *         - id
+ *         - title
+ *         - company
+ *         - description
+ *         - responsibilities
+ *         - qualifications
+ *         - location
+ *         - locationType
+ *       properties:
+ *         id:
+ *           type: string
+ *           description: The auto-generated id of the job
+ *         title:
+ *           type: string
+ *           description: The title of the job
+ *         company:
+ *           type: string
+ *           description: The company offering the job
+ *         description:
+ *           type: string
+ *           description: A detailed description of the job
+ *         responsibilities:
+ *           type: array
+ *           items:
+ *             $ref: '#/components/schemas/Responsibility'
+ *           description: List of responsibilities for the job
+ *         qualifications:
+ *           type: array
+ *           items:
+ *             $ref: '#/components/schemas/Qualification'
+ *           description: List of qualifications for the job
+ *         location:
+ *           type: string
+ *           description: The location of the job
+ *         locationType:
+ *           type: string
+ *           description: The type of location (e.g., remote, onsite)
+ *         yearsOfExperience:
+ *           type: number
+ *           description: Optional years of experience required for the job
+ *         elasticId:
+ *           type: string
+ *           description: Optional Elasticsearch ID for the job
+ * 
+ *       example:
+ *         id: 60d0fe4f5311236168a109ca
+ *         title: Backend Developer
+ *         company: Tech Corp
+ *         description: Develop RESTful APIs using Node.js and Express.
+ *         responsibilities:
+ *           - description: Design and implement RESTful APIs using Node.js
+ *         qualifications:
+ *           - description: JavaScript
+ *         location: New York, NY
+ *         locationType: Remote
+ *         yearsOfExperience: 3
+ *         elasticId: abc123xyz
+ * 
+ */
+
+export const router = express.Router();
+router.use(express.json());
+
+/**
+ * @swagger
+ * tags:
+ *   name: Jobs
+ * /jobs:
+ *   post:
+ *     summary: Create a new job
+ *     tags: [Jobs]
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             $ref: '#/components/schemas/JobDto'
+ *     responses:
+ *       201:
+ *         description: Job successfully created
+ *       500:
+ *         description: Internal server error
+ */
+router.post("/", async (req: Request, res: Response) => {
     try {
-        const job: Job = JSON.parse(getRequestBody(req)) as Job;
-        const insertRes = await collections.jobs?.insertOne(job);
-        if (insertRes) {
-            wrapResponse(res, HTTP_CREATED);
-        } else {
-            wrapResponse(res, HTTP_INTERNAL_SERVER_ERROR);
-        }
-    } catch (error) {
-        console.error(error);
-        wrapResponse(res, HTTP_INTERNAL_SERVER_ERROR);
-    }
-};
+        const service: JobService = new JobService();
+        const jobDto: JobDto = req.body as JobDto;
+        const job = await service.createJob(jobDto);
 
-const putJobHandler = async (
-    req: http.IncomingMessage,
-    res: http.ServerResponse
-) => {
-    const id = getJobId(req);
-
-    if (id === null) {
-        wrapResponse(res, HTTP_BAD_REQUEST);
-        return;
-    }
-
-    try {
-        const updatedJob: Job = JSON.parse(getRequestBody(req)) as Job;
-        const query = { _id: new ObjectId(id) };
-
-        const result = collections?.jobs?.updateOne(query, {
-            $set: updatedJob,
-        });
-
-        if (result) {
-            wrapResponse(res, HTTP_OK);
-        } else {
-            wrapResponse(res, HTTP_INTERNAL_SERVER_ERROR);
-        }
-    } catch (error) {
-        console.error(error);
-        wrapResponse(res, HTTP_INTERNAL_SERVER_ERROR);
-    }
-};
-
-const getJobHandler = async (
-    req: http.IncomingMessage,
-    res: http.ServerResponse
-) => {
-    const id = getJobId(req);
-
-    if (id === null) {
-        wrapResponse(res, HTTP_BAD_REQUEST);
-        return;
-    }
-
-    try {
-        const query = { _id: new ObjectId(id) };
-        const job = (await collections.jobs?.findOne(query)) as unknown as Job;
         if (job) {
-            wrapResponse(res, HTTP_OK);
+            res.status(HTTP_CREATED).send(job);
         } else {
-            wrapResponse(res, HTTP_NOT_FOUND, wrapText("Job does not exist"));
+            res.status(HTTP_INTERNAL_SERVER_ERROR).send("Unable to create job");
         }
     } catch (error) {
         console.error(error);
-        wrapResponse(res, HTTP_INTERNAL_SERVER_ERROR);
+        res.status(HTTP_INTERNAL_SERVER_ERROR).send(error);
     }
-};
+});
 
-const getJobId = (req: http.IncomingMessage) => {
-    const requestPathname: string | null = getRequestPathname(req);
+/**
+ * @swagger
+ * tags:
+ *   name: Jobs
+ * /jobs/{id}:
+ *   get:
+ *     summary: Get a job by ID
+ *     tags: [Jobs]
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         schema:
+ *           type: string
+ *         required: true
+ *         description: The ID of the job
+ *     responses:
+ *       200:
+ *         description: The job description by ID
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Job'
+ *       404:
+ *         description: Job not found
+ *       500:
+ *         description: Internal server error
+ */
+router.get("/:id", async (req: Request, res: Response) => {
+    const id = req?.params?.id;
 
-    if (requestPathname === null) {
-        return null;
+    try {
+        const service: JobService = new JobService();
+        const job = await service.getJob(id);
+
+        if (job) {
+            res.status(HTTP_OK).send(job);
+        } else {
+            res.status(HTTP_NOT_FOUND).send("Job does not exist");
+        }
+    } catch (error) {
+        console.error(error);
+        res.status(HTTP_INTERNAL_SERVER_ERROR).send(error);
     }
+});
 
-    const pathParts: string[] = requestPathname.split("/");
+/**
+ * @swagger
+ * tags:
+ *   name: Jobs
+ * /jobs/{id}:
+ *   put:
+ *     summary: Update a job by ID
+ *     tags: [Jobs]
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         schema:
+ *           type: string
+ *         required: true
+ *         description: The ID of the job
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             $ref: '#/components/schemas/JobDto'
+ *     responses:
+ *       200:
+ *         description: Successfully updated job
+ *       304:
+ *         description: Job not modified
+ *       500:
+ *         description: Internal server error
+ */
+router.put("/:id", async (req: Request, res: Response) => {
+    const id = req?.params?.id;
 
-    if (pathParts.length === 0) {
-        return null;
+    try {
+        const service: JobService = new JobService();
+        const dto: JobDto = req.body as JobDto;
+        const updatedId: string | null = await service.putJob(id, dto);
+
+        if (updatedId) {
+            res.status(HTTP_OK).send(
+                `Successfully updated job with id: ${updatedId}`
+            );
+        } else {
+            res.status(HTTP_NOT_MODIFIED).send(
+                `Job with id: ${id} was not updated`
+            );
+        }
+    } catch (error) {
+        console.error(error);
+        res.status(HTTP_INTERNAL_SERVER_ERROR).send(error);
     }
+});
 
-    return pathParts[-1];
-};
+/**
+ * @swagger
+ * tags:
+ *   name: Jobs
+ * /jobs/{id}:
+ *   delete:
+ *     summary: Delete a job by ID
+ *     tags: [Jobs]
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         schema:
+ *           type: string
+ *         required: true
+ *         description: The ID of the job
+ *     responses:
+ *       204:
+ *         description: Successfully deleted the job
+ *       404:
+ *         description: Job not found
+ *       500:
+ *         description: Internal server error
+ */
+router.delete("/:id", async (req: Request, res: Response) => {
+    const id = req?.params?.id;
 
-const router: Map<
-    string,
-    (req: http.IncomingMessage, res: http.ServerResponse) => Promise<void>
-> = new Map([
-    ["GET", getJobHandler],
-    ["POST", postJobHandler],
-    ["PUT", putJobHandler],
-]);
+    try {
+        const service: JobService = new JobService();
+        const deletedCount = await service.deleteJob(id);
 
-export default router;
+        if (deletedCount === null || deletedCount === 0) {
+            res.status(HTTP_NOT_FOUND).send(
+                `Job with id: ${id} does not exist`
+            );
+        } else {
+            res.status(HTTP_NO_CONTENT).send();
+        }
+    } catch (error) {
+        console.error(error);
+        res.status(HTTP_INTERNAL_SERVER_ERROR).send(error);
+    }
+});
