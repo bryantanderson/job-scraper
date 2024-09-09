@@ -2,6 +2,7 @@ import { ObjectId } from "mongodb";
 import Job from "../models/job";
 import JobDto from "../models/jobDto";
 import { collections } from "./mongo";
+import { copyFields } from "../util/util";
 
 export default class JobService {
     constructor() {}
@@ -33,30 +34,30 @@ export default class JobService {
 
     public async getJob(id: string): Promise<Job | null> {
         const query = { _id: new ObjectId(id) };
-        const job = (await collections.jobs?.findOne(query)) as unknown as Job;
+        const res = await collections.jobs?.findOne(query);
 
-        if (job) {
-            return job;
+        if (res) {
+            return res as Job;
         }
         return null;
     }
 
-    public async putJob(id: string, dto: JobDto): Promise<string | null> {
+    public async putJob(id: string, dto: JobDto): Promise<number | null> {
         const existingJob = await this.getJob(id);
 
         if (!existingJob) {
             return null;
         }
 
-        this.updateJob(existingJob, dto);
+        copyFields(existingJob, dto);
 
         const query = { _id: new ObjectId(id) };
-        const result = await collections?.jobs?.updateOne(query, {
+        const res = await collections?.jobs?.updateOne(query, {
             $set: existingJob,
         });
 
-        if (result?.upsertedId) {
-            return result.upsertedId.toString();
+        if (res) {
+            return res.upsertedCount;
         }
         return null;
     }
@@ -69,14 +70,5 @@ export default class JobService {
             return result.deletedCount;
         }
         return null;
-    }
-
-    private updateJob(job: Job, dto: JobDto): void {
-        job.title = dto.title;
-        job.company = dto.company;
-        job.description = dto.description;
-        job.location = dto.location;
-        job.locationType = dto.locationType;
-        job.yearsOfExperience = dto.yearsOfExperience;
     }
 }

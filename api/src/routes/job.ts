@@ -168,9 +168,9 @@ router.post("/", async (req: Request, res: Response) => {
 
         if (job) {
             res.status(HTTP_CREATED).send(job);
-        } else {
-            res.status(HTTP_INTERNAL_SERVER_ERROR).send("Unable to create job");
+            return;
         }
+        res.status(HTTP_INTERNAL_SERVER_ERROR).send("Unable to create job");
     } catch (error) {
         console.error(error);
         res.status(HTTP_INTERNAL_SERVER_ERROR).send(error);
@@ -215,9 +215,9 @@ router.get("/:id", async (req: Request, res: Response) => {
 
         if (job) {
             res.status(HTTP_OK).send(job);
-        } else {
-            res.status(HTTP_NOT_FOUND).send("Job does not exist");
+            return;
         }
+        res.status(HTTP_NOT_FOUND).send("Job does not exist");
     } catch (error) {
         console.error(error);
         res.status(HTTP_INTERNAL_SERVER_ERROR).send(error);
@@ -261,17 +261,17 @@ router.put("/:id", async (req: Request, res: Response) => {
     try {
         const service: JobService = new JobService();
         const dto: JobDto = req.body as JobDto;
-        const updatedId: string | null = await service.putJob(id, dto);
+        const updatedCount = await service.putJob(id, dto);
 
-        if (updatedId) {
+        if (updatedCount) {
             res.status(HTTP_OK).send(
-                `Successfully updated job with id: ${updatedId}`
+                `Successfully updated ${updatedCount} jobs`
             );
-        } else {
-            res.status(HTTP_NOT_MODIFIED).send(
-                `Job with id: ${id} was not updated`
-            );
+            return;
         }
+        res.status(HTTP_NOT_MODIFIED).send(
+            `Job with id: ${id} was not updated`
+        );
     } catch (error) {
         console.error(error);
         res.status(HTTP_INTERNAL_SERVER_ERROR).send(error);
@@ -314,9 +314,9 @@ router.delete("/:id", async (req: Request, res: Response) => {
             res.status(HTTP_NOT_FOUND).send(
                 `Job with id: ${id} does not exist`
             );
-        } else {
-            res.status(HTTP_NO_CONTENT).send();
+            return;
         }
+        res.status(HTTP_NO_CONTENT).send();
     } catch (error) {
         console.error(error);
         res.status(HTTP_INTERNAL_SERVER_ERROR).send(error);

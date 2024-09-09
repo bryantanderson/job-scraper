@@ -1,7 +1,8 @@
 import express from "express";
 import dotenv from "dotenv";
 import { router as jobRouter } from "./routes/job";
-import { router as loginRouter } from "./routes/login";
+import { router as loginRouter } from "./routes/auth";
+import { router as candidateRouter } from "./routes/candidate";
 import authMiddleware from "./middleware/auth";
 import { connectToMongoDB } from "./services/mongo";
 import swaggerJsDoc from "swagger-jsdoc";
@@ -49,6 +50,7 @@ connectToMongoDB()
         server.use(authMiddleware);
 
         server.use("/jobs", jobRouter);
+        server.use("/candidates", candidateRouter);
 
         server.listen(port, () => {
             console.log(

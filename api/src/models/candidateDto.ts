@@ -1,17 +1,14 @@
-import { ObjectId } from "mongodb";
 import Education from "./education";
 import Experience from "./experience";
-import Skill from "./skill";
 
-export default interface Candidate {
-    _id: ObjectId;
+export default interface CandidateDto {
     email: string;
     firstName: string;
     lastName: string;
     contactNumber: string;
     education: Education[];
     experiences: Experience[];
-    skills: Skill[];
+    skills: string[];
     summary?: string;
     location?: string;
 }
