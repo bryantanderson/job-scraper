@@ -10,6 +10,10 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
+func makeData(d any) gin.H {
+	return gin.H{"data": d}
+}
+
 func handleInternalError(c *gin.Context, err error) {
 	log.Errorln(err)
 	c.AbortWithStatus(http.StatusInternalServerError)
@@ -18,10 +22,6 @@ func handleInternalError(c *gin.Context, err error) {
 func handleBadRequest(c *gin.Context, err error) {
 	log.Errorln(err)
 	c.AbortWithStatusJSON(http.StatusBadRequest, "Invalid Input")
-}
-
-func makeData(d any) gin.H {
-	return gin.H{"data": d}
 }
 
 func firstToLower(s string) string {

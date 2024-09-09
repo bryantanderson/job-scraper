@@ -3,6 +3,7 @@ package services
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"math"
 	"sync"
@@ -160,7 +161,7 @@ func (a *AssessorService) worker(i int, mChan <-chan []byte) {
 	}
 }
 
-func (a *AssessorService) AssessCandidate(payload *AssessPayload) {
+func (a *AssessorService) AssessCandidate(payload *AssessPayload) (*Assessment, error) {
 	ca := CandidateAssessment{
 		Assessment: Assessment{
 			Id:    UserIdToAssessmentId(payload.UserId),
@@ -173,7 +174,7 @@ func (a *AssessorService) AssessCandidate(payload *AssessPayload) {
 
 	if err != nil {
 		log.Errorf("Failed to generate criteria for job: %s \n", err.Error())
-		return
+		return nil, err
 	}
 
 	// Instantiate wait group, error channel, and cancel context
@@ -213,13 +214,17 @@ func (a *AssessorService) AssessCandidate(payload *AssessPayload) {
 	case err := <-errChan:
 		log.Errorf("Received error: %v, cancelling all goroutines\n", err)
 		cancel()
+		return nil, err
 
 	case <-ctx.Done():
-		log.Error(ctx.Err().Error())
+		err := ctx.Err()
+		log.Error(err.Error())
+		return nil, err
 
 	case <-time.After(time.Minute):
 		log.Errorln("Timeout reached, cancelling all goroutines")
 		cancel()
+		return nil, errors.New("Assessment computation has timed out")
 
 	case <-wgDone:
 		log.Infoln("All goroutines have completed successfully, finalizing assessment score")
@@ -230,6 +235,7 @@ func (a *AssessorService) AssessCandidate(payload *AssessPayload) {
 			log.Infof("Failed to save assessment: %s\n", err.Error())
 		}
 	}
+	return &ca.Assessment, nil
 }
 
 func (a *AssessorService) GetAssessment(userId string) (*Assessment, error) {

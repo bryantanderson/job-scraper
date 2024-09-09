@@ -56,6 +56,41 @@ const docTemplate = `{
                         "description": "Internal Server Error"
                     }
                 }
+            },
+            "post": {
+                "description": "Creates an existing assessment.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Assessment"
+                ],
+                "summary": "Creates an existing assessment.",
+                "parameters": [
+                    {
+                        "description": "Request body",
+                        "name": "payload",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/services.AssessPayload"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/services.Assessment"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error"
+                    }
+                }
             }
         },
         "/assessments/{userId}": {
@@ -89,111 +124,6 @@ const docTemplate = `{
                     },
                     "404": {
                         "description": "Not Found"
-                    },
-                    "500": {
-                        "description": "Internal Server Error"
-                    }
-                }
-            }
-        },
-        "/candidates/": {
-            "post": {
-                "description": "Creates a candidate.",
-                "consumes": [
-                    "application/json"
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "Candidate"
-                ],
-                "summary": "Creates a candidate.",
-                "parameters": [
-                    {
-                        "description": "Request payload",
-                        "name": "data",
-                        "in": "body",
-                        "required": true,
-                        "schema": {
-                            "$ref": "#/definitions/services.CandidateDto"
-                        }
-                    }
-                ],
-                "responses": {
-                    "201": {
-                        "description": "Created",
-                        "schema": {
-                            "$ref": "#/definitions/services.Candidate"
-                        }
-                    },
-                    "400": {
-                        "description": "Bad Request"
-                    },
-                    "500": {
-                        "description": "Internal Server Error"
-                    }
-                }
-            }
-        },
-        "/candidates/{id}": {
-            "get": {
-                "description": "Gets a candidate.",
-                "consumes": [
-                    "application/json"
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "Candidate"
-                ],
-                "summary": "Gets a candidate.",
-                "parameters": [
-                    {
-                        "type": "string",
-                        "description": "Candidate ID",
-                        "name": "id",
-                        "in": "path",
-                        "required": true
-                    }
-                ],
-                "responses": {
-                    "201": {
-                        "description": "Created",
-                        "schema": {
-                            "$ref": "#/definitions/services.Candidate"
-                        }
-                    },
-                    "404": {
-                        "description": "Not Found"
-                    },
-                    "500": {
-                        "description": "Internal Server Error"
-                    }
-                }
-            },
-            "delete": {
-                "description": "Deletes an existing candidate.",
-                "consumes": [
-                    "application/json"
-                ],
-                "tags": [
-                    "Candidate"
-                ],
-                "summary": "Deletes an existing candidate.",
-                "parameters": [
-                    {
-                        "type": "string",
-                        "description": "Candidate ID",
-                        "name": "id",
-                        "in": "path",
-                        "required": true
-                    }
-                ],
-                "responses": {
-                    "204": {
-                        "description": "No Content"
                     },
                     "500": {
                         "description": "Internal Server Error"
@@ -344,6 +274,20 @@ const docTemplate = `{
         }
     },
     "definitions": {
+        "services.AssessPayload": {
+            "type": "object",
+            "properties": {
+                "candidate": {
+                    "$ref": "#/definitions/services.Candidate"
+                },
+                "job": {
+                    "$ref": "#/definitions/services.Job"
+                },
+                "userId": {
+                    "type": "string"
+                }
+            }
+        },
         "services.Assessment": {
             "type": "object",
             "properties": {
@@ -414,35 +358,6 @@ const docTemplate = `{
                 }
             }
         },
-        "services.CandidateDto": {
-            "type": "object",
-            "properties": {
-                "education": {
-                    "type": "array",
-                    "items": {
-                        "$ref": "#/definitions/services.Education"
-                    }
-                },
-                "experiences": {
-                    "type": "array",
-                    "items": {
-                        "$ref": "#/definitions/services.Experience"
-                    }
-                },
-                "location": {
-                    "type": "string"
-                },
-                "skills": {
-                    "type": "array",
-                    "items": {
-                        "type": "string"
-                    }
-                },
-                "summary": {
-                    "type": "string"
-                }
-            }
-        },
         "services.Education": {
             "type": "object",
             "properties": {
@@ -469,9 +384,6 @@ const docTemplate = `{
                 "endDate": {
                     "type": "string"
                 },
-                "isCurrent": {
-                    "type": "boolean"
-                },
                 "startDate": {
                     "type": "string"
                 },
@@ -483,6 +395,9 @@ const docTemplate = `{
         "services.Job": {
             "type": "object",
             "properties": {
+                "company": {
+                    "type": "string"
+                },
                 "description": {
                     "type": "string"
                 },

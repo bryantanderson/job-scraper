@@ -27,10 +27,7 @@ func Authentication() gin.HandlerFunc {
 		authorizationHeader := c.GetHeader("Authorization")
 		token := strings.Split(authorizationHeader, " ")[1]
 
-		if token == "" {
-			c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{"message": "Invalid token"})
-			return
-		} else if token != apiToken {
+		if token == "" || token != apiToken {
 			c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{"message": "Invalid token"})
 			return
 		}

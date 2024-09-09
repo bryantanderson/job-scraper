@@ -201,7 +201,10 @@ func TestAssessCandidateAndGet(t *testing.T) {
 	sut := initializeTestAssessorService(nil, nil, nil)
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			sut.AssessCandidate(&tc.data)
+			assessment, err := sut.AssessCandidate(&tc.data)
+			assert.NotNil(t, assessment)
+			assert.NoError(t, err)
+			// Test that the assessment was indeed stored
 			existingAssessment, err := sut.GetAssessment(tc.data.UserId)
 			assert.NoError(t, err)
 			assert.NotNil(t, existingAssessment)

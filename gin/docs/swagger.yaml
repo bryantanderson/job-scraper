@@ -1,4 +1,13 @@
 definitions:
+  services.AssessPayload:
+    properties:
+      candidate:
+        $ref: '#/definitions/services.Candidate'
+      job:
+        $ref: '#/definitions/services.Job'
+      userId:
+        type: string
+    type: object
   services.Assessment:
     properties:
       compatibilityPoint:
@@ -45,25 +54,6 @@ definitions:
       summary:
         type: string
     type: object
-  services.CandidateDto:
-    properties:
-      education:
-        items:
-          $ref: '#/definitions/services.Education'
-        type: array
-      experiences:
-        items:
-          $ref: '#/definitions/services.Experience'
-        type: array
-      location:
-        type: string
-      skills:
-        items:
-          type: string
-        type: array
-      summary:
-        type: string
-    type: object
   services.Education:
     properties:
       description:
@@ -81,8 +71,6 @@ definitions:
         type: string
       endDate:
         type: string
-      isCurrent:
-        type: boolean
       startDate:
         type: string
       title:
@@ -90,6 +78,8 @@ definitions:
     type: object
   services.Job:
     properties:
+      company:
+        type: string
       description:
         type: string
       elasticId:
@@ -212,6 +202,29 @@ paths:
       summary: Queries for an existing assessment.
       tags:
       - Assessment
+    post:
+      consumes:
+      - application/json
+      description: Creates an existing assessment.
+      parameters:
+      - description: Request body
+        in: body
+        name: payload
+        required: true
+        schema:
+          $ref: '#/definitions/services.AssessPayload'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/services.Assessment'
+        "500":
+          description: Internal Server Error
+      summary: Creates an existing assessment.
+      tags:
+      - Assessment
   /assessments/{userId}:
     get:
       consumes:
@@ -237,75 +250,6 @@ paths:
       summary: Gets an existing assessment.
       tags:
       - Assessment
-  /candidates/:
-    post:
-      consumes:
-      - application/json
-      description: Creates a candidate.
-      parameters:
-      - description: Request payload
-        in: body
-        name: data
-        required: true
-        schema:
-          $ref: '#/definitions/services.CandidateDto'
-      produces:
-      - application/json
-      responses:
-        "201":
-          description: Created
-          schema:
-            $ref: '#/definitions/services.Candidate'
-        "400":
-          description: Bad Request
-        "500":
-          description: Internal Server Error
-      summary: Creates a candidate.
-      tags:
-      - Candidate
-  /candidates/{id}:
-    delete:
-      consumes:
-      - application/json
-      description: Deletes an existing candidate.
-      parameters:
-      - description: Candidate ID
-        in: path
-        name: id
-        required: true
-        type: string
-      responses:
-        "204":
-          description: No Content
-        "500":
-          description: Internal Server Error
-      summary: Deletes an existing candidate.
-      tags:
-      - Candidate
-    get:
-      consumes:
-      - application/json
-      description: Gets a candidate.
-      parameters:
-      - description: Candidate ID
-        in: path
-        name: id
-        required: true
-        type: string
-      produces:
-      - application/json
-      responses:
-        "201":
-          description: Created
-          schema:
-            $ref: '#/definitions/services.Candidate'
-        "404":
-          description: Not Found
-        "500":
-          description: Internal Server Error
-      summary: Gets a candidate.
-      tags:
-      - Candidate
   /health:
     get:
       consumes:

@@ -43,7 +43,6 @@ func (s *Server) AddRoutes(
 	s.Router.Use(gin.Recovery())
 
 	s.registerAssessRoutes()
-	s.registerCandidateRoutes()
 	s.registerHealthRoutes()
 	s.registerScrapeRoutes()
 	s.registerInstrumentRoutes()

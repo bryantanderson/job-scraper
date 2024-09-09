@@ -18,6 +18,36 @@ func (s *Server) registerAssessRoutes() {
 	}
 }
 
+// handleAssessmentCreate godoc
+// @Summary Creates an existing assessment.
+// @Tags Assessment
+// @Description Creates an existing assessment.
+// @Param payload body services.AssessPayload true "Request body"
+// @Accept json
+// @Produce json
+// @Success 200 {object} services.Assessment
+// @Failure 500
+// @Router /assessments/ [post]
+func (s *Server) handleAssessmentCreate() gin.HandlerFunc {
+	return func(c *gin.Context) {
+		var payload services.AssessPayload
+
+		if err := c.ShouldBindJSON(&payload); err != nil {
+			handleBadRequest(c, err)
+			return
+		}
+
+		assessment, err := s.AssessorService.AssessCandidate(&payload)
+
+		if err != nil {
+			handleInternalError(c, err)
+			return
+		}
+
+		c.JSON(http.StatusOK, assessment)
+	}
+}
+
 // handleAssessmentGet godoc
 // @Summary Gets an existing assessment.
 // @Tags Assessment
