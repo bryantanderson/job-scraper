@@ -1,3 +1,3 @@
-export default class AuthDto {
-    constructor(public token: string) {}
+export default interface AuthDto {
+    token: string;
 }

@@ -2,7 +2,8 @@ import { UUID } from "mongodb";
 import jwt from "jsonwebtoken";
 import LoginDto from "../models/loginDto";
 import User from "../models/user";
-import { collections } from "../repository/mongo";
+import { collections } from "./mongo";
+import { createHash } from "crypto";
 
 export const jwtSecret = process.env.JWT_SECRET_KEY || "secret";
 
@@ -22,7 +23,11 @@ export default class LoginService {
     }
 
     public async SignUp(dto: LoginDto): Promise<string | null> {
-        const user = new User(UUID.toString(), dto.username, dto.password);
+        const user: User = {
+            id: UUID.toString(),
+            username: dto.username,
+            password: dto.password,
+        };
         const res = await collections.users?.insertOne(user);
         const insertedId = res?.insertedId.toString();
 
@@ -40,5 +45,11 @@ export default class LoginService {
         return jwt.sign(jwtPayload, jwtSecret, {
             expiresIn: "1h",
         });
+    }
+
+    private hashPassword(password: string): string {
+        const hash = createHash("sha256");
+        const res = hash.update(password);
+        return res.digest("hex");
     }
 }

@@ -1,8 +1,9 @@
 import express from "express";
 import dotenv from "dotenv";
 import { router as jobRouter } from "./routes/job";
+import { router as loginRouter } from "./routes/login";
 import authMiddleware from "./middleware/auth";
-import { connectToMongoDB } from "./repository/mongo";
+import { connectToMongoDB } from "./services/mongo";
 import swaggerJsDoc from "swagger-jsdoc";
 import swaggerUi from "swagger-ui-express";
 
@@ -36,19 +37,23 @@ const swaggerSpecs = swaggerJsDoc(swaggerOptions);
 
 connectToMongoDB()
     .then(() => {
-        // Register middleware
-        server.use(authMiddleware);
-
         // Register routes
         server.use(
             "/docs",
             swaggerUi.serve,
             swaggerUi.setup(swaggerSpecs, { explorer: true })
         );
+        server.use("/auth", loginRouter);
+
+        // Register middleware. All routes after this will be protected.
+        server.use(authMiddleware);
+
         server.use("/jobs", jobRouter);
 
         server.listen(port, () => {
-            console.log(`Node listening on port ${port}`);
+            console.log(
+                `Node listening on port ${port}. \nSwagger running at http://localhost:${port}/docs`
+            );
         });
     })
     .catch((error: Error) => {

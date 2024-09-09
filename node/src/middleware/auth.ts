@@ -5,6 +5,19 @@ import { HTTP_NOT_AUTHORIZED } from "../util/constants";
 
 const authMiddleware = (req: Request, res: Response, next: NextFunction) => {
     try {
+        const nonProtectedRoutes = ["/auth/login", "auth/signup"];
+
+        if (process.env.MODE === "dev") {
+            console.log(
+                "Running in development mode, authentication is disabled."
+            );
+            return next();
+        }
+
+        if (nonProtectedRoutes.includes(req.path)) {
+            return next();
+        }
+
         const token = req.headers?.authorization?.split(" ")[1];
 
         if (!token) {

@@ -13,6 +13,10 @@ import JobService from "../services/job";
 /**
  * @swagger
  * components:
+ *   securitySchemes:
+ *     BearerAuth:
+ *       type: http
+ *       scheme: bearer
  *   schemas:
  *     Responsibility:
  *       type: object
@@ -140,6 +144,8 @@ router.use(express.json());
  *   name: Jobs
  * /jobs:
  *   post:
+ *     security:
+ *       - BearerAuth: []
  *     summary: Create a new job
  *     tags: [Jobs]
  *     requestBody:
@@ -177,6 +183,8 @@ router.post("/", async (req: Request, res: Response) => {
  *   name: Jobs
  * /jobs/{id}:
  *   get:
+ *     security:
+ *       - BearerAuth: []
  *     summary: Get a job by ID
  *     tags: [Jobs]
  *     parameters:
@@ -222,6 +230,8 @@ router.get("/:id", async (req: Request, res: Response) => {
  *   name: Jobs
  * /jobs/{id}:
  *   put:
+ *     security:
+ *       - BearerAuth: []
  *     summary: Update a job by ID
  *     tags: [Jobs]
  *     parameters:
@@ -274,6 +284,8 @@ router.put("/:id", async (req: Request, res: Response) => {
  *   name: Jobs
  * /jobs/{id}:
  *   delete:
+ *     security:
+ *       - BearerAuth: []
  *     summary: Delete a job by ID
  *     tags: [Jobs]
  *     parameters:

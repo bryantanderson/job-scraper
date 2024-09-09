@@ -1,3 +1,3 @@
-export default class Skill {
-    constructor(public description: string) {}
+export default interface Skill {
+    description: string;
 }

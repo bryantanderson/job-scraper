@@ -1,12 +1,10 @@
-export default class JobDto {
-    constructor(
-        public title: string,
-        public company: string,
-        public description: string,
-        public responsibilities: string[],
-        public qualifications: string[],
-        public location: string,
-        public locationType: string,
-        public yearsOfExperience?: number
-    ) {}
+export default interface JobDto {
+    title: string;
+    company: string;
+    description: string;
+    responsibilities: string[];
+    qualifications: string[];
+    location: string;
+    locationType: string;
+    yearsOfExperience?: number;
 }

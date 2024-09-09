@@ -1,18 +1,15 @@
+import { ObjectId } from "mongodb";
 import Qualification from "./qualification";
 import Responsibility from "./responsibility";
-import { ObjectId } from "mongodb";
 
-export default class Job {
-    constructor(
-        public id: ObjectId,
-        public title: string,
-        public company: string,
-        public description: string,
-        public responsibilities: Responsibility[],
-        public qualifications: Qualification[],
-        public location: string,
-        public locationType: string,
-        public yearsOfExperience?: number,
-        public elasticId?: string
-    ) {}
+export default interface Job {
+    _id: ObjectId;
+    title: string;
+    company: string;
+    description: string;
+    responsibilities: Responsibility[];
+    qualifications: Qualification[];
+    location: string;
+    locationType: string;
+    yearsOfExperience?: number;
 }

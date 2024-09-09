@@ -1,6 +1,4 @@
-export default class LoginDto {
-    constructor(
-        public username: string,
-        public password: string
-    ) {}
+export default interface LoginDto {
+    username: string;
+    password: string;
 }

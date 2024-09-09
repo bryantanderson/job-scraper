@@ -1,26 +1,27 @@
-import { ObjectId, UUID } from "mongodb";
+import { ObjectId } from "mongodb";
 import Job from "../models/job";
 import JobDto from "../models/jobDto";
-import Responsibility from "../models/responsibility";
-import Qualification from "../models/qualification";
-import { collections } from "../repository/mongo";
+import { collections } from "./mongo";
 
 export default class JobService {
     constructor() {}
 
     public async createJob(dto: JobDto): Promise<Job | null> {
-        const id = new ObjectId(UUID.toString());
-        const job: Job = new Job(
-            id,
-            dto.title,
-            dto.company,
-            dto.description,
-            dto.responsibilities.map((resp) => new Responsibility(resp)),
-            dto.qualifications.map((qual) => new Qualification(qual)),
-            dto.location,
-            dto.locationType,
-            dto.yearsOfExperience
-        );
+        const job: Job = {
+            _id: new ObjectId(),
+            title: dto.title,
+            company: dto.company,
+            description: dto.description,
+            responsibilities: dto.responsibilities.map((resp) => ({
+                description: resp,
+            })),
+            qualifications: dto.qualifications.map((qual) => ({
+                description: qual,
+            })),
+            location: dto.location,
+            locationType: dto.locationType,
+            yearsOfExperience: dto.yearsOfExperience,
+        };
         const res = await collections.jobs?.insertOne(job);
         const insertedId = res?.insertedId.toString();
 

@@ -1,3 +1,3 @@
-export default class Qualification {
-    constructor(public description: string) {}
+export default interface Qualification {
+    description: string;
 }
