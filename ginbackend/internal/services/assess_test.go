@@ -12,7 +12,7 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-type ErrorBehaviorConfig struct {
+type AssessorStoreErrorBehaviorConfig struct {
 	errorOnCreate                    bool
 	errorOnCreateInternalJobCriteria bool
 	errorOnQueryInternalJobCriteria  bool
@@ -27,12 +27,12 @@ type FakeAssessorStore struct {
 	jobCriterion map[string]*services.JobCriteria
 
 	// For controlling error behavior
-	errorBehaviorConfig *ErrorBehaviorConfig
+	errorBehaviorConfig *AssessorStoreErrorBehaviorConfig
 }
 
-func InitializeFakeAssessorStore(cfg *ErrorBehaviorConfig) *FakeAssessorStore {
+func InitializeFakeAssessorStore(cfg *AssessorStoreErrorBehaviorConfig) *FakeAssessorStore {
 	if cfg == nil {
-		cfg = &ErrorBehaviorConfig{}
+		cfg = &AssessorStoreErrorBehaviorConfig{}
 	}
 	return &FakeAssessorStore{
 		assessments:         make(map[string]*services.Assessment),
@@ -73,7 +73,6 @@ func (s *FakeAssessorStore) QueryInternalJobCriteria(id string) (*services.JobCr
 	if s.errorBehaviorConfig.errorOnQueryInternalJobCriteria {
 		return nil, errors.New(INTERNAL_SERVER_ERROR)
 	}
-
 	if jc, ok := s.jobCriterion[id]; ok {
 		return jc, nil
 	}
@@ -95,7 +94,6 @@ func (s *FakeAssessorStore) Query(params map[string]string) ([]*services.Assessm
 	if s.errorBehaviorConfig.errorOnQuery {
 		return nil, errors.New(INTERNAL_SERVER_ERROR)
 	}
-
 	result := make([]*services.Assessment, 0, len(s.assessments))
 	for _, a := range s.assessments {
 		r := reflect.ValueOf(a)
@@ -104,7 +102,6 @@ func (s *FakeAssessorStore) Query(params map[string]string) ([]*services.Assessm
 			assessmentValue := reflect.Indirect(r).FieldByName(k)
 			if assessmentValue.String() == v {
 				result = append(result, a)
-				return result, nil
 			}
 		}
 	}
@@ -234,15 +231,15 @@ func TestAssessCandidateWithStoreError(t *testing.T) {
 
 	testCases := []struct {
 		name   string
-		config *ErrorBehaviorConfig
+		config *AssessorStoreErrorBehaviorConfig
 	}{
 		{
 			name:   "Errors while creating a job criteria",
-			config: &ErrorBehaviorConfig{errorOnCreateInternalJobCriteria: true},
+			config: &AssessorStoreErrorBehaviorConfig{errorOnCreateInternalJobCriteria: true},
 		},
 		{
 			name:   "Errors while creating an assessment",
-			config: &ErrorBehaviorConfig{errorOnCreate: true},
+			config: &AssessorStoreErrorBehaviorConfig{errorOnCreate: true},
 		},
 	}
 	payload := services.AssessPayload{

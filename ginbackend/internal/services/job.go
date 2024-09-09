@@ -23,7 +23,7 @@ type Responsibility struct {
 type Job struct {
 	Id                string           `json:"id,omitempty" bson:"_id"`
 	Title             string           `json:"title" jsonschema:"description=The position that the job is hiring for"`
-	Company			  string 			`json:"company" jsonschema:"description=The company hiring for the job."`
+	Company           string           `json:"company" jsonschema:"description=The company hiring for the job."`
 	Description       string           `json:"description" jsonschema:"description=Brief summary of what the job is about"`
 	Responsibilities  []Responsibility `json:"responsibilities" jsonschema:"description=Responsibilities of the ideal employee listed out in the job description"`
 	Qualifications    []Qualification  `json:"qualifications" jsonschema:"description=Required qualifications of the ideal employee"`
@@ -39,89 +39,18 @@ type JobStore interface {
 }
 
 type JobService struct {
-	inTopic             string
-	inTopicSubscription string
-	outTopic            string
-	store               JobStore
-	client              LlmService
-	eventService        EventService
+	store  JobStore
+	client LlmService
 }
 
 func InitializeJobService(
-	inTopic, outTopic string,
 	c LlmService,
-	e EventService,
 	s JobStore,
 ) *JobService {
-	srv := &JobService{
-		inTopic:             inTopic,
-		inTopicSubscription: topicNameToSubscriptionName(inTopic),
-		outTopic:            outTopic,
-		store:               s,
-		client:              c,
-		eventService:        e,
+	return &JobService{
+		store:  s,
+		client: c,
 	}
-	srv.RegisterSubscribers()
-	return srv
-}
-
-func (s *JobService) RegisterSubscribers() {
-	routine := func() {
-		numWorkers := 1
-		mChan := make(chan []byte, numWorkers)
-		defer close(mChan)
-		for i := 1; i <= numWorkers; i++ {
-			go s.worker(i, mChan)
-		}
-		s.eventService.Subscribe(s.inTopic, s.inTopicSubscription, mChan)
-	}
-	s.eventService.Register(routine)
-}
-
-func (s *JobService) worker(i int, mChan <-chan []byte) {
-	log.Printf("Worker number %d for job tasks starting...", i)
-	for {
-		body, ok := <-mChan
-		description := string(body)
-
-		if !ok {
-			// If the channel is closed, the worker should stop
-			break
-		}
-
-		s.structureJob(description)
-	}
-}
-
-func (s *JobService) structureJob(description string) {
-	prompt := fmt.Sprintf(`
-	Given the job description, turn it into a structured json format.
-
-    Job Description:
-	%s
-	`, description)
-
-	job := Job{}
-	err := s.client.Message(prompt, len(description)/2, &job)
-
-	if err != nil {
-		log.Errorf("Failed to structure job description: %s", err.Error())
-		return
-	}
-
-	jobJson, err := json.Marshal(job)
-
-	if err != nil {
-		log.Errorln(err)
-		return
-	}
-
-	event := Event{
-		topic:       s.outTopic,
-		body:        string(jobJson),
-		contentType: "application/json",
-	}
-	s.eventService.Publish(&event)
 }
 
 func (s *JobService) CompleteScrapedJob(scrapedJob *ScrapedJob) *Job {
@@ -148,6 +77,7 @@ func (s *JobService) CompleteScrapedJob(scrapedJob *ScrapedJob) *Job {
 		return nil
 	}
 
+	s.copyScrapedJobFields(scrapedJob, job)
 	job.Id = uuid.NewString()
 	err = s.store.Create(job)
 
@@ -161,4 +91,11 @@ func (s *JobService) CompleteScrapedJob(scrapedJob *ScrapedJob) *Job {
 
 func (s *JobService) QueryJobs(params map[string]string) ([]*Job, error) {
 	return s.store.Query(params)
+}
+
+func (s *JobService) copyScrapedJobFields(scrapedJob *ScrapedJob, jobToComplete *Job) {
+	jobToComplete.Title = scrapedJob.Title
+	jobToComplete.Company = scrapedJob.Company
+	jobToComplete.Description = scrapedJob.Description
+	jobToComplete.Location = scrapedJob.Location
 }

@@ -24,11 +24,10 @@ type Server struct {
 }
 
 func NewServer(settings *setup.ApplicationSettings) *Server {
-	s := &Server{
+	return &Server{
 		Router:   gin.Default(),
 		Settings: settings,
 	}
-	return s
 }
 
 func (s *Server) AddRoutes(
@@ -70,10 +69,7 @@ func (s *Server) AddRoutes(
 	// Instantiate job service
 	jobStore := database.InitializeJobStore(db, elastic)
 	jobService := services.InitializeJobService(
-		s.Settings.JobTasksTopic,
-		s.Settings.JobResultsTopic,
 		client,
-		eventService,
 		jobStore,
 	)
 
