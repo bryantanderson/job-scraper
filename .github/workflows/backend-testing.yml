@@ -13,5 +13,5 @@ jobs:
 
       - name: "Run go tests"
         run: |
-          cd ginbackend
+          cd gin
           go test ./...
