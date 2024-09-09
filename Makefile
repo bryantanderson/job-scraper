@@ -6,10 +6,6 @@ gin:
 	docker compose -f docker-compose.yml --profile go build && \
 	docker compose -f docker-compose.yml --profile go up
 
-spring:
-	docker compose -f docker-compose.yml --profile java --profile sql build && \
-	docker compose -f docker-compose.yml --profile java --profile sql up
-
 fastapi:
 	docker compose -f docker-compose.yml --profile python build && \
 	docker compose -f docker-compose.yml --profile python up

@@ -1,6 +1,4 @@
 {
-	"java.compile.nullAnalysis.mode": "disabled",
-	"java.configuration.updateBuildConfiguration": "automatic",
 	"files.autoSaveWhenNoErrors": true,
 	"editor.formatOnSave": true,
 	"editor.codeActionsOnSave": {},
