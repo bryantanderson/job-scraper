@@ -53,12 +53,12 @@ func InitializeJobService(
 	}
 }
 
-func (s *JobService) CompleteScrapedJob(scrapedJob *ScrapedJob) *Job {
+func (s *JobService) CompleteScrapedJob(scrapedJob *ScrapedJob) (*Job, error) {
 	scrapedJobJson, err := json.Marshal(scrapedJob)
 
 	if err != nil {
 		log.Errorf("Failed to convert scraped job to JSON: %s", err.Error())
-		return nil
+		return nil, err
 	}
 
 	prompt := fmt.Sprintf(`
@@ -74,7 +74,7 @@ func (s *JobService) CompleteScrapedJob(scrapedJob *ScrapedJob) *Job {
 
 	if err != nil {
 		log.Errorf("Failed to complete scraped job: %s", err.Error())
-		return nil
+		return nil, err
 	}
 
 	s.copyScrapedJobFields(scrapedJob, job)
@@ -83,10 +83,10 @@ func (s *JobService) CompleteScrapedJob(scrapedJob *ScrapedJob) *Job {
 
 	if err != nil {
 		log.Errorf("Failed to store job in database: %s", err.Error())
-		return nil
+		return nil, err
 	}
 
-	return job
+	return job, nil
 }
 
 func (s *JobService) QueryJobs(params map[string]string) ([]*Job, error) {

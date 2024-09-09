@@ -78,8 +78,9 @@ func TestCompleteScrapedJob(t *testing.T) {
 		Location:    "Mountain View, CA",
 		Description: "Works on distributed systems and leads a team of software engineers.",
 	}
-	completedJob := sut.CompleteScrapedJob(&scrapedJob)
+	completedJob, err := sut.CompleteScrapedJob(&scrapedJob)
 
+	assert.Nil(t, err)
 	assert.NotNil(t, completedJob)
 	assert.Equal(t, scrapedJob.Title, completedJob.Title)
 	assert.Equal(t, scrapedJob.Company, completedJob.Company)
@@ -87,7 +88,7 @@ func TestCompleteScrapedJob(t *testing.T) {
 	assert.Equal(t, scrapedJob.Description, completedJob.Description)
 }
 
-func TestCompleteScrapedJobWithError(t *testing.T) {
+func TestCompleteScrapedJobWithStoreError(t *testing.T) {
 	gin.SetMode(gin.TestMode)
 
 	errConfig := &JobStoreErrorBehaviorConfig{
@@ -99,8 +100,24 @@ func TestCompleteScrapedJobWithError(t *testing.T) {
 		fakeStore,
 	)
 
-	completedJob := sut.CompleteScrapedJob(&services.ScrapedJob{})
+	completedJob, err := sut.CompleteScrapedJob(&services.ScrapedJob{})
 
+	assert.Error(t, err)
+	assert.Nil(t, completedJob)
+}
+
+func TestCompleteScrapedJobWithLlmError(t *testing.T) {
+	gin.SetMode(gin.TestMode)
+
+	fakeStore := initializeFakeJobStore(nil)
+	sut := services.InitializeJobService(
+		InitializeFakeLlmServiceWithError(),
+		fakeStore,
+	)
+
+	completedJob, err := sut.CompleteScrapedJob(&services.ScrapedJob{})
+
+	assert.Error(t, err)
 	assert.Nil(t, completedJob)
 }
 

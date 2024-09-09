@@ -2,7 +2,6 @@ package handlers
 
 import (
 	"github.com/bryantanderson/go-job-assessor/internal/database"
-	"github.com/bryantanderson/go-job-assessor/internal/middleware"
 	"github.com/bryantanderson/go-job-assessor/internal/services"
 	"github.com/bryantanderson/go-job-assessor/internal/setup"
 
@@ -32,13 +31,16 @@ func NewServer(settings *setup.ApplicationSettings) *Server {
 
 func (s *Server) AddRoutes(
 	db *database.Database,
-	client *services.Llm,
 	elastic *database.ElasticDatabase,
+	jobService *services.JobService,
+	eventService *services.EventServiceImpl,
+	scraperService *services.ScraperService,
+	assessorService *services.AssessorService,
+	candidateService *services.CandidateService,
 ) {
 	// Define middleware
 	s.Router.Use(gin.Logger())
 	s.Router.Use(gin.Recovery())
-	s.Router.Use(middleware.ErrorHandler)
 
 	s.registerAssessRoutes()
 	s.registerCandidateRoutes()
@@ -48,33 +50,6 @@ func (s *Server) AddRoutes(
 
 	// Define Swagger route
 	s.Router.GET("/swagger/*any", ginSwagger.WrapHandler(swaggerfiles.Handler))
-
-	// Instantiate event service
-	eventService := services.InitializeEventServiceImpl(s.Settings)
-
-	// Instantiate candidate service
-	candidateStore := database.InitializeCandidateStore(db)
-	candidateService := services.InitializeCandidateService(candidateStore)
-
-	// Instantiate assessor service
-	assessStore := database.InitializeAssessStore(db, elastic)
-	assessorService := services.InitializeAssessorService(
-		s.Settings.AssessmentTasksTopic,
-		s.Settings.AssessmentResultsTopic,
-		client,
-		eventService,
-		assessStore,
-	)
-
-	// Instantiate job service
-	jobStore := database.InitializeJobStore(db, elastic)
-	jobService := services.InitializeJobService(
-		client,
-		jobStore,
-	)
-
-	// Instantiate scraper service
-	scraperService := services.InitializeScraperService(jobService, assessorService)
 
 	s.EventService = eventService
 	s.JobService = jobService

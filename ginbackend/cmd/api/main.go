@@ -33,7 +33,42 @@ func run(ctx context.Context) {
 	// Connect to Elastic Search
 	elasticSearch := database.InitializeElasticSearch(settings)
 
-	server.AddRoutes(db, openai, elasticSearch)
+	// Instantiate event service
+	eventService := services.InitializeEventServiceImpl(settings)
+
+	// Instantiate candidate service
+	candidateStore := database.InitializeCandidateStore(db)
+	candidateService := services.InitializeCandidateService(candidateStore)
+
+	// Instantiate assessor service
+	assessStore := database.InitializeAssessStore(db, elasticSearch)
+	assessorService := services.InitializeAssessorService(
+		settings.AssessmentTasksTopic,
+		settings.AssessmentResultsTopic,
+		openai,
+		eventService,
+		assessStore,
+	)
+
+	// Instantiate job service
+	jobStore := database.InitializeJobStore(db, elasticSearch)
+	jobService := services.InitializeJobService(
+		openai,
+		jobStore,
+	)
+
+	// Instantiate scraper service
+	scraperService := services.InitializeScraperService(jobService, assessorService)
+
+	server.AddRoutes(
+		db,
+		elasticSearch,
+		jobService,
+		eventService,
+		scraperService,
+		assessorService,
+		candidateService,
+	)
 
 	httpServer := &http.Server{
 		Addr:         server.Settings.ServerPort,

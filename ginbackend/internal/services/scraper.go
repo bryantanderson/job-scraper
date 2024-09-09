@@ -102,9 +102,9 @@ func (s *ScraperService) ScrapeSeekJobPage(payload *ScrapePayload) []*ScrapedJob
 		}
 
 		go func() {
-			job := s.jobService.CompleteScrapedJob(scrapedJob)
+			job, err := s.jobService.CompleteScrapedJob(scrapedJob)
 
-			if job == nil {
+			if err != nil {
 				log.Errorln("AI job completion was not completed successfully, returning early")
 				return
 			}
