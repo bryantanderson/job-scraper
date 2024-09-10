@@ -1,14 +1,17 @@
+.PHONY: all
 
 dev:
 	make build && make start
 
+.PHONY: api
+api:
+	docker compose -f docker-compose.yml --profile api --profile cache build && \
+	docker compose -f docker-compose.yml --profile api --profile cache up
+
+.PHONY: gin
 gin:
 	docker compose -f docker-compose.yml --profile go build && \
 	docker compose -f docker-compose.yml --profile go up
-
-fastapi:
-	docker compose -f docker-compose.yml --profile python build && \
-	docker compose -f docker-compose.yml --profile python up
 
 instrument:
 	docker compose -f docker-compose.yml --profile all --profile instrument build && \

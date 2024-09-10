@@ -1,9 +1,26 @@
 services:
+  api:
+    platform: linux/amd64
+    profiles: [ api, all ]
+    build:
+      target: dev
+      context: api
+      dockerfile: Dockerfile
+    hostname: api
+    container_name: api
+    ports:
+      - 8000:8000
+    env_file:
+      - api/.env
+    depends_on:
+      redis:
+        condition: service_started
+
   gin:
     platform: linux/amd64
     profiles: [ go, all ]
     build:
-      context: ginbackend
+      context: gin
       dockerfile: Dockerfile
     hostname: gin
     container_name: gin
@@ -28,16 +45,16 @@ services:
         source: postgres-data
         target: /var/lib/postgresql/data
 
-  # redis:
-  #   platform: linux/amd64
-  #   profiles: [cache, all]
-  #   image: bitnami/redis:latest
-  #   ports:
-  #     - 6379:6379
-  #   environment:
-  #     ALLOW_EMPTY_PASSWORD: "yes"
-  #   volumes:
-  #     - redis-data:/bitnami/redis/data
+  redis:
+    platform: linux/amd64
+    profiles: [ cache, all ]
+    image: bitnami/redis:latest
+    ports:
+      - 6379:6379
+    environment:
+      ALLOW_EMPTY_PASSWORD: "yes"
+    volumes:
+      - redis-data:/bitnami/redis/data
 
   pgadmin:
     platform: linux/amd64
@@ -53,7 +70,6 @@ services:
       PGADMIN_LISTEN_PORT: 5050
     volumes:
       - pgadmin-data:/var/lib/pgadmin
-
     depends_on:
       postgres:
         condition: service_started
@@ -78,9 +94,6 @@ services:
       gin:
         condition:
           service_started
-      fastapi:
-        condition:
-          service_started
 
   grafana:
     platform: linux/amd64
@@ -96,7 +109,6 @@ services:
       GF_SERVER_HTTP_PORT: 3001
     volumes:
       - grafana_data:/var/lib/grafana
-
     depends_on:
       prometheus:
         condition: service_started
@@ -106,8 +118,8 @@ volumes:
     name: "postgres-data"
   pgadmin-data:
     name: "pgadmin-data"
-  mongodb-data:
-    name: "mongodb-data"
+  redis-data:
+    name: "redis-data"
   prometheus-data:
     name: "prometheus-data"
   grafana-data:
