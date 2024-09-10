@@ -3,7 +3,7 @@ import Education from "./education";
 import Experience from "./experience";
 import Skill from "./skill";
 
-export default interface Candidate {
+type Candidate = {
     _id: ObjectId;
     email: string;
     firstName: string;
@@ -14,4 +14,6 @@ export default interface Candidate {
     skills: Skill[];
     summary?: string;
     location?: string;
-}
+};
+
+export default Candidate;

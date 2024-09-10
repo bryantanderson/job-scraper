@@ -1,3 +1,5 @@
-export default interface Qualification {
+type Qualification = {
     description: string;
-}
+};
+
+export default Qualification;

@@ -1,7 +1,7 @@
 import Education from "./education";
 import Experience from "./experience";
 
-export default interface CandidateDto {
+type CandidateDto = {
     email: string;
     firstName: string;
     lastName: string;
@@ -11,4 +11,6 @@ export default interface CandidateDto {
     skills: string[];
     summary?: string;
     location?: string;
-}
+};
+
+export default CandidateDto;

@@ -1,4 +1,4 @@
-export default interface JobDto {
+type JobDto = {
     title: string;
     company: string;
     description: string;
@@ -7,4 +7,6 @@ export default interface JobDto {
     location: string;
     locationType: string;
     yearsOfExperience?: number;
-}
+};
+
+export default JobDto;

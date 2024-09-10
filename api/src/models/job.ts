@@ -2,7 +2,7 @@ import { ObjectId } from "mongodb";
 import Qualification from "./qualification";
 import Responsibility from "./responsibility";
 
-export default interface Job {
+type Job = {
     _id: ObjectId;
     title: string;
     company: string;
@@ -12,4 +12,6 @@ export default interface Job {
     location: string;
     locationType: string;
     yearsOfExperience?: number;
-}
+};
+
+export default Job;

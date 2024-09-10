@@ -1,3 +1,5 @@
-export default interface Responsibility {
+type Responsibility = {
     description: string;
-}
+};
+
+export default Responsibility;

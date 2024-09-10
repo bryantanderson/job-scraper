@@ -1,3 +1,5 @@
-export default interface Skill {
+type Skill = {
     description: string;
-}
+};
+
+export default Skill;
