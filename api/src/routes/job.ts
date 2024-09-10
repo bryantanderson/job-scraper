@@ -1,11 +1,4 @@
-import {
-    HTTP_CREATED,
-    HTTP_INTERNAL_SERVER_ERROR,
-    HTTP_NO_CONTENT,
-    HTTP_NOT_FOUND,
-    HTTP_NOT_MODIFIED,
-    HTTP_OK,
-} from "../util/constants";
+import { HTTP_STATUS } from "../util/constants";
 import express, { Request, Response } from "express";
 import JobDto from "../models/jobDto";
 import JobService from "../services/job";
@@ -167,13 +160,15 @@ router.post("/", async (req: Request, res: Response) => {
         const job = await service.createJob(jobDto);
 
         if (job) {
-            res.status(HTTP_CREATED).send(job);
+            res.status(HTTP_STATUS.CREATED).send(job);
             return;
         }
-        res.status(HTTP_INTERNAL_SERVER_ERROR).send("Unable to create job");
+        res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).send(
+            "Unable to create job"
+        );
     } catch (error) {
         console.error(error);
-        res.status(HTTP_INTERNAL_SERVER_ERROR).send(error);
+        res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).send(error);
     }
 });
 
@@ -214,13 +209,13 @@ router.get("/:id", async (req: Request, res: Response) => {
         const job = await service.getJob(id);
 
         if (job) {
-            res.status(HTTP_OK).send(job);
+            res.status(HTTP_STATUS.OK).send(job);
             return;
         }
-        res.status(HTTP_NOT_FOUND).send("Job does not exist");
+        res.status(HTTP_STATUS.NOT_FOUND).send("Job does not exist");
     } catch (error) {
         console.error(error);
-        res.status(HTTP_INTERNAL_SERVER_ERROR).send(error);
+        res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).send(error);
     }
 });
 
@@ -264,17 +259,17 @@ router.put("/:id", async (req: Request, res: Response) => {
         const updatedCount = await service.putJob(id, dto);
 
         if (updatedCount) {
-            res.status(HTTP_OK).send(
+            res.status(HTTP_STATUS.OK).send(
                 `Successfully updated ${updatedCount} jobs`
             );
             return;
         }
-        res.status(HTTP_NOT_MODIFIED).send(
+        res.status(HTTP_STATUS.NOT_MODIFIED).send(
             `Job with id: ${id} was not updated`
         );
     } catch (error) {
         console.error(error);
-        res.status(HTTP_INTERNAL_SERVER_ERROR).send(error);
+        res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).send(error);
     }
 });
 
@@ -311,14 +306,14 @@ router.delete("/:id", async (req: Request, res: Response) => {
         const deletedCount = await service.deleteJob(id);
 
         if (deletedCount === null || deletedCount === 0) {
-            res.status(HTTP_NOT_FOUND).send(
+            res.status(HTTP_STATUS.NOT_FOUND).send(
                 `Job with id: ${id} does not exist`
             );
             return;
         }
-        res.status(HTTP_NO_CONTENT).send();
+        res.status(HTTP_STATUS.NO_CONTENT).send();
     } catch (error) {
         console.error(error);
-        res.status(HTTP_INTERNAL_SERVER_ERROR).send(error);
+        res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).send(error);
     }
 });

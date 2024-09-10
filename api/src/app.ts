@@ -4,7 +4,7 @@ import { router as jobRouter } from "./routes/job";
 import { router as loginRouter } from "./routes/auth";
 import { router as candidateRouter } from "./routes/candidate";
 import authMiddleware from "./middleware/auth";
-import { connectToMongoDB } from "./services/mongo";
+import { connectToMongoDB } from "./services/database";
 import swaggerJsDoc from "swagger-jsdoc";
 import swaggerUi from "swagger-ui-express";
 

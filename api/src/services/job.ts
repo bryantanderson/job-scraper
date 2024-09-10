@@ -1,7 +1,7 @@
 import { ObjectId } from "mongodb";
 import Job from "../models/job";
 import JobDto from "../models/jobDto";
-import { collections } from "./mongo";
+import { collections } from "./database";
 import { copyFields } from "../util/util";
 
 export default class JobService {

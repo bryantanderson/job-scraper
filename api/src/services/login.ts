@@ -2,7 +2,7 @@ import { UUID } from "mongodb";
 import jwt from "jsonwebtoken";
 import LoginDto from "../models/loginDto";
 import User from "../models/user";
-import { collections } from "./mongo";
+import { collections } from "./database";
 import { createHash } from "crypto";
 
 export const jwtSecret = process.env.JWT_SECRET_KEY || "secret";

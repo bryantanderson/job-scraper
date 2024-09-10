@@ -1,9 +1,5 @@
 import express, { Request, Response } from "express";
-import {
-    HTTP_INTERNAL_SERVER_ERROR,
-    HTTP_NOT_AUTHORIZED,
-    HTTP_OK,
-} from "../util/constants";
+import { HTTP_STATUS } from "../util/constants";
 import LoginDto from "../models/loginDto";
 import LoginService from "../services/login";
 
@@ -60,15 +56,15 @@ router.post("/login", async (req: Request, res: Response) => {
         const dto = req.body as LoginDto;
         const accessToken = await service.Login(dto);
         if (!accessToken) {
-            res.status(HTTP_NOT_AUTHORIZED).send(
+            res.status(HTTP_STATUS.UNAUTHORIZED).send(
                 "Account not found. Please sign-up to create a new account."
             );
             return;
         }
-        res.status(HTTP_OK).send(accessToken);
+        res.status(HTTP_STATUS.OK).send(accessToken);
     } catch (error) {
         console.error(error);
-        res.status(HTTP_INTERNAL_SERVER_ERROR).send(error);
+        res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).send(error);
     }
 });
 
@@ -104,13 +100,13 @@ router.post("/sign-in", async (req: Request, res: Response) => {
         const accessToken = await service.SignUp(dto);
 
         if (!accessToken) {
-            res.status(HTTP_INTERNAL_SERVER_ERROR).send(
+            res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).send(
                 "We are unable to process your request at this moment."
             );
         }
-        res.status(HTTP_OK).send(accessToken);
+        res.status(HTTP_STATUS.OK).send(accessToken);
     } catch (error) {
         console.error(error);
-        res.status(HTTP_INTERNAL_SERVER_ERROR).send(error);
+        res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).send(error);
     }
 });

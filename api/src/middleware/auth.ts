@@ -1,7 +1,7 @@
 import { Request, Response, NextFunction } from "express";
 import jwt from "jsonwebtoken";
 import { jwtSecret } from "../services/login";
-import { HTTP_NOT_AUTHORIZED } from "../util/constants";
+import { HTTP_STATUS } from "../util/constants";
 
 const authMiddleware = (req: Request, res: Response, next: NextFunction) => {
     try {
@@ -21,7 +21,7 @@ const authMiddleware = (req: Request, res: Response, next: NextFunction) => {
         const token = req.headers?.authorization?.split(" ")[1];
 
         if (!token) {
-            res.status(HTTP_NOT_AUTHORIZED).send("Token not provided");
+            res.status(HTTP_STATUS.UNAUTHORIZED).send("Token not provided");
             return;
         }
 
@@ -29,7 +29,7 @@ const authMiddleware = (req: Request, res: Response, next: NextFunction) => {
         next();
     } catch (error) {
         console.error(error);
-        res.status(HTTP_NOT_AUTHORIZED).send("Invalid access token");
+        res.status(HTTP_STATUS.UNAUTHORIZED).send("Invalid access token");
     }
 };
 
